@@ -116,6 +116,43 @@ export default function CharacterMap() {
   const handleWheel=useCallback(e=>{e.preventDefault();setZoom(p=>Math.max(0.3,Math.min(3,p*(e.deltaY>0?0.9:1.1))));},[]);
   useEffect(()=>{const s=svgRef.current;if(s){s.addEventListener("wheel",handleWheel,{passive:false});return()=>s.removeEventListener("wheel",handleWheel);}},[handleWheel]);
 
+  // Touch support
+  const lastTapRef=useRef({time:0,id:null});
+  const pinchRef=useRef({dist:0,zoom:1});
+  const getTouchXY=(t)=>({clientX:t.touches[0].clientX,clientY:t.touches[0].clientY});
+  const getPinchDist=(t)=>{const dx=t.touches[0].clientX-t.touches[1].clientX,dy=t.touches[0].clientY-t.touches[1].clientY;return Math.sqrt(dx*dx+dy*dy);};
+
+  const handleTouchDown=useCallback((e,cid)=>{e.stopPropagation();e.preventDefault();
+    const now=Date.now();if(now-lastTapRef.current.time<300&&lastTapRef.current.id===cid){openEditModal(cid);lastTapRef.current={time:0,id:null};return;}
+    lastTapRef.current={time:now,id:cid};
+    if(connectingFrom){if(connectingFrom!==cid)setShowRelModal({from:connectingFrom,to:cid});setConnectingFrom(null);return;}
+    const ch=characters.find(c=>c.id===cid);const{clientX,clientY}=getTouchXY(e);const p=getSvgPoint(clientX,clientY);
+    setDragOffset({x:p.x-ch.x,y:p.y-ch.y});setDragging(cid);setSelectedChar(cid);
+  },[characters,connectingFrom,getSvgPoint]);
+
+  const handleTouchMove=useCallback(e=>{e.preventDefault();
+    if(e.touches.length===2){const d=getPinchDist(e);setZoom(Math.max(0.3,Math.min(3,pinchRef.current.zoom*(d/pinchRef.current.dist))));return;}
+    if(e.touches.length!==1)return;const{clientX,clientY}=getTouchXY(e);
+    if(dragging){const p=getSvgPoint(clientX,clientY);setCharacters(pr=>pr.map(c=>c.id===dragging?{...c,x:p.x-dragOffset.x,y:p.y-dragOffset.y}:c));}
+    else if(isPanning)setPan({x:clientX-panStart.x,y:clientY-panStart.y});
+  },[dragging,dragOffset,getSvgPoint,isPanning,panStart]);
+
+  const handleTouchUp=useCallback(()=>{setDragging(null);setIsPanning(false);},[]);
+
+  const handleCanvasTouchStart=useCallback(e=>{
+    if(e.touches.length===2){e.preventDefault();pinchRef.current={dist:getPinchDist(e),zoom:zoom};return;}
+    if(connectingFrom){setConnectingFrom(null);return;}
+    const touch=e.touches[0];const el=document.elementFromPoint(touch.clientX,touch.clientY);
+    if(el===svgRef.current||el?.tagName==="rect"){setSelectedChar(null);setIsPanning(true);setPanStart({x:touch.clientX-pan.x,y:touch.clientY-pan.y});}
+  },[connectingFrom,pan,zoom]);
+
+  useEffect(()=>{const s=svgRef.current;if(!s)return;
+    s.addEventListener("touchstart",handleCanvasTouchStart,{passive:false});
+    s.addEventListener("touchmove",handleTouchMove,{passive:false});
+    s.addEventListener("touchend",handleTouchUp,{passive:false});
+    return()=>{s.removeEventListener("touchstart",handleCanvasTouchStart);s.removeEventListener("touchmove",handleTouchMove);s.removeEventListener("touchend",handleTouchUp);};
+  },[handleCanvasTouchStart,handleTouchMove,handleTouchUp]);
+
   const resetRelForm=()=>{setRelType("friend");setRelLabel("");setRelCustomColor(null);setRelLineStyle("solid");};
   
   const addCharacter=()=>{if(!newName.trim())return;setCharacters(p=>[...p,{id:generateId(),name:newName.trim(),x:300+Math.random()*400,y:200+Math.random()*300,color:newColor,avatar:newAvatar,description:newDesc.trim(),sizeLevel:newSize}]);setNewName("");setNewDesc("");setNewColor(COLORS[Math.floor(Math.random()*COLORS.length)]);setNewAvatar(null);setNewSize(2);setShowAddModal(false);};
@@ -164,7 +201,7 @@ export default function CharacterMap() {
 
     {connectingFrom&&<div style={{position:"absolute",top:"80px",left:"50%",transform:"translateX(-50%)",zIndex:100,padding:"10px 24px",borderRadius:"100px",background:"linear-gradient(135deg,#6366F1,#8B5CF6)",color:"#fff",fontSize:"13px",fontWeight:"500",boxShadow:"0 8px 32px rgba(99,102,241,0.3)"}}>"{characters.find(c=>c.id===connectingFrom)?.name}" → 연결할 인물을 클릭하세요</div>}
 
-    <svg ref={svgRef} style={{width:"100%",height:"100%",cursor:isPanning?"grabbing":(connectingFrom?"crosshair":"grab")}} onMouseDown={handleCanvasMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
+    <svg ref={svgRef} style={{width:"100%",height:"100%",cursor:isPanning?"grabbing":(connectingFrom?"crosshair":"grab"),touchAction:"none"}} onMouseDown={handleCanvasMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
       <defs>
         <filter id="glow"><feGaussianBlur stdDeviation="3" result="cb"/><feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
         <filter id="shadow"><feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="#000" floodOpacity={isDark?"0.4":"0.15"}/></filter>
@@ -176,7 +213,7 @@ export default function CharacterMap() {
         {relations.map(rel=>{const fc=characters.find(c=>c.id===rel.from),tc=characters.find(c=>c.id===rel.to);if(!fc||!tc)return null;const color=getRelColor(rel),ls=rel.lineStyle||"solid",pathD=getRelPathD(rel,fc,tc),mid=getRelMid(rel,fc,tc),lb=rel.label||(RELATIONSHIP_TYPES[rel.type]?.label||"기타"),pw=Math.max(50,lb.length*14+16);
           let arrow=null,arrowPathD=pathD;if(ls==="arrowToFirst"||ls==="arrowToSecond"){arrow=getArrowPoints(fc,tc,ls==="arrowToSecond");if(arrow){const dx=tc.x-fc.x,dy=tc.y-fc.y,qx=(fc.x+tc.x)/2-dy*0.15,qy=(fc.y+tc.y)/2+dx*0.15;arrowPathD=ls==="arrowToSecond"?`M ${fc.x} ${fc.y} Q ${qx} ${qy} ${arrow.endX} ${arrow.endY}`:`M ${arrow.endX} ${arrow.endY} Q ${qx} ${qy} ${tc.x} ${tc.y}`;}}
           return(<g key={rel.id}><path d={arrowPathD} fill="none" stroke={color} strokeWidth="6" opacity="0.15" filter="url(#glow)"/><path d={arrowPathD} fill="none" stroke={color} strokeWidth="2.5" strokeDasharray={ls==="dashed"?"8,4":"none"} opacity="0.8"/>{arrow&&<polygon points={`${arrow.tipX},${arrow.tipY} ${arrow.p1x},${arrow.p1y} ${arrow.p2x},${arrow.p2y}`} fill={color} opacity="0.8"/>}<rect x={mid.x-pw/2} y={mid.y-14} width={pw} height="28" rx="14" fill={T.pill} stroke={color} strokeWidth="1" opacity="0.9" style={{cursor:"pointer"}} onClick={e=>{e.stopPropagation();openEditRelation(rel);}}/><text x={mid.x} y={mid.y+4} textAnchor="middle" fill={color} fontSize="11" fontWeight="500" style={{pointerEvents:"none"}}>{lb}</text></g>);})}
-        {characters.map(ch=>{const isSel=selectedChar===ch.id,isConn=connectingFrom===ch.id,s=SIZE_LEVELS[ch.sizeLevel??2];return(<g key={ch.id} onMouseDown={e=>handleMouseDown(e,ch.id)} onDoubleClick={e=>{e.stopPropagation();openEditModal(ch.id);}} style={{cursor:dragging===ch.id?"grabbing":"pointer"}}>{(isSel||isConn)&&<circle cx={ch.x} cy={ch.y} r={s.radius+12} fill="none" stroke={isConn?"#6366F1":ch.color} strokeWidth="2" strokeDasharray="4,4" opacity="0.6" style={{animation:"da 2s linear infinite"}}/>}<circle cx={ch.x} cy={ch.y+3} r={s.radius} fill="rgba(0,0,0,0.2)" filter="url(#shadow)"/>
+        {characters.map(ch=>{const isSel=selectedChar===ch.id,isConn=connectingFrom===ch.id,s=SIZE_LEVELS[ch.sizeLevel??2];return(<g key={ch.id} onMouseDown={e=>handleMouseDown(e,ch.id)} onTouchStart={e=>handleTouchDown(e,ch.id)} onDoubleClick={e=>{e.stopPropagation();openEditModal(ch.id);}} style={{cursor:dragging===ch.id?"grabbing":"pointer"}}>{(isSel||isConn)&&<circle cx={ch.x} cy={ch.y} r={s.radius+12} fill="none" stroke={isConn?"#6366F1":ch.color} strokeWidth="2" strokeDasharray="4,4" opacity="0.6" style={{animation:"da 2s linear infinite"}}/>}<circle cx={ch.x} cy={ch.y+3} r={s.radius} fill="rgba(0,0,0,0.2)" filter="url(#shadow)"/>
           {ch.avatar?(<><defs><clipPath id={`ac-${ch.id}`}><circle cx={ch.x} cy={ch.y} r={s.radius}/></clipPath></defs><circle cx={ch.x} cy={ch.y} r={s.radius+2} fill="none" stroke={isSel?T.selStr:ch.color} strokeWidth={isSel?"3":"2.5"}/><image href={ch.avatar} x={ch.x-s.radius} y={ch.y-s.radius} width={s.radius*2} height={s.radius*2} clipPath={`url(#ac-${ch.id})`} preserveAspectRatio="xMidYMid slice" style={{pointerEvents:"none"}}/></>):(<><defs><radialGradient id={`g-${ch.id}`}><stop offset="0%" stopColor={ch.color} stopOpacity="0.9"/><stop offset="100%" stopColor={ch.color} stopOpacity="0.6"/></radialGradient></defs><circle cx={ch.x} cy={ch.y} r={s.radius} fill={`url(#g-${ch.id})`} stroke={isSel?T.selStr:T.nodeStr} strokeWidth={isSel?"3":"1.5"}/><text x={ch.x} y={ch.y} textAnchor="middle" dominantBaseline="central" fill="#fff" fontSize={s.fontSize} fontWeight="700" style={{pointerEvents:"none"}}>{ch.name.charAt(0)}</text></>)}
           <foreignObject x={ch.x-150} y={ch.y+s.radius+4} width="300" height="34" style={{pointerEvents:"none",overflow:"visible"}}><div xmlns="http://www.w3.org/1999/xhtml" style={{display:"flex",justifyContent:"center"}}><div style={{display:"inline-block",padding:"4px 14px",borderRadius:"13px",background:T.label,border:`1px solid ${T.labelBd}`,fontSize:`${s.labelFontSize}px`,fontWeight:"500",color:T.labelTxt,fontFamily:"'Noto Sans KR',sans-serif",whiteSpace:"nowrap",textAlign:"center"}}>{ch.name}</div></div></foreignObject>{ch.description&&<title>{ch.name}: {ch.description}</title>}</g>);})}
       </g>
