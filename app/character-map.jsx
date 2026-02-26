@@ -299,10 +299,11 @@ export default function CharacterMap() {
     </div></div>}
 
     {/* Footer credit */}
-    <div style={{position:"absolute",bottom:"8px",left:"50%",transform:"translateX(-50%)",zIndex:10,color:T.textMut,fontSize:"10px",opacity:0.4,whiteSpace:"nowrap",pointerEvents:"none"}}>이 사이트는 Claude를 통해 제작되었습니다.</div>
+    <style>{`.credit-line{position:absolute;left:50%;transform:translateX(-50%);z-index:10;white-space:nowrap;pointer-events:none;bottom:8px;font-size:15px;opacity:0.45}@media(max-width:768px){.credit-line{bottom:100px;font-size:10px}}`}</style>
+    <div className="credit-line" style={{color:T.textMut}}>이 사이트는 Claude를 통해 제작되었습니다.</div>
 
     {/* Info Modal */}
-    {showInfo&&<div style={modalStyle} onClick={()=>setShowInfo(false)}><div style={{...cardStyle,width:"500px"}} onClick={e=>e.stopPropagation()}>
+    {showInfo&&<div style={modalStyle} onClick={()=>setShowInfo(false)}><div style={{...cardStyle,width:"500px",maxHeight:"85vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
       <h3 style={{margin:"0 0 24px",color:T.text,fontSize:"20px",fontWeight:"800",textAlign:"center"}}>사이트 이용방법</h3>
       <div style={{display:"flex",flexDirection:"column",gap:"18px",fontSize:"13px",color:T.text,opacity:0.85,lineHeight:"1.9"}}>
         <div style={{padding:"14px 16px",borderRadius:"14px",background:T.input}}>
@@ -333,6 +334,7 @@ export default function CharacterMap() {
           <div style={{fontWeight:"700",color:T.text,marginBottom:"6px",fontSize:"14px"}}>💾 내보내기 / 불러오기</div>
           <div>관계도를 나중에 이어서 수정하고 싶거나 다른 사람과 공유하고 싶다면, <span style={{fontWeight:"600"}}>+ 버튼</span>에서 이 두 가지 기능을 사용하세요.</div>
         </div>
+        <div style={{fontSize:"13px",color:T.textMut,textAlign:"center",marginTop:"4px"}}>길을 잃었다면 사이트 하단의 확대율 버튼을 클릭하세요.</div>
       </div>
       <div style={{display:"flex",justifyContent:"flex-end",marginTop:"24px"}}>
         <button onClick={()=>setShowInfo(false)} style={btnP}>확인</button>
