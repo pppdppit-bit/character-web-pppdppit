@@ -233,7 +233,7 @@ export default function CharacterMap() {
     </svg>
 
     {/* Bottom-right FAB */}
-    <div style={{position:"absolute",bottom:"70px",right:"16px",zIndex:200,display:"flex",flexDirection:"column",alignItems:"flex-end",gap:"8px"}}>
+    <div className="fab-area" style={{position:"absolute",bottom:"70px",right:"16px",zIndex:200,display:"flex",flexDirection:"column",alignItems:"flex-end",gap:"8px"}}>
       {showFab&&<>
         <button onClick={()=>{setShowThemePanel(p=>!p);setShowFab(false);}} style={{...btnS,padding:"10px 18px",fontSize:"13px",display:"flex",alignItems:"center",gap:"8px",boxShadow:T.pShadow,borderRadius:"14px"}}>🎨 배경 색상</button>
         <button onClick={()=>{exportToPng();setShowFab(false);}} disabled={isExporting} style={{...btnS,padding:"10px 18px",fontSize:"13px",display:"flex",alignItems:"center",gap:"8px",boxShadow:T.pShadow,borderRadius:"14px",background:"linear-gradient(135deg,rgba(34,197,94,0.15),rgba(34,197,94,0.05))",borderColor:"rgba(34,197,94,0.3)",color:"#22C55E"}}>{isExporting?"⏳":"📸"} PNG 저장</button>
@@ -246,7 +246,7 @@ export default function CharacterMap() {
     </div>
 
     {/* Theme panel - opens UPWARD from bottom-right, inside viewport */}
-    {showThemePanel&&<div style={{position:"absolute",bottom:"136px",right:"16px",zIndex:200,background:`linear-gradient(145deg,${T.card[0]},${T.card[1]})`,borderRadius:"16px",padding:"20px",border:`1px solid ${T.cardBd}`,boxShadow:T.shadow,width:"220px"}}>
+    {showThemePanel&&<div className="theme-area" style={{position:"absolute",bottom:"136px",right:"16px",zIndex:200,background:`linear-gradient(145deg,${T.card[0]},${T.card[1]})`,borderRadius:"16px",padding:"20px",border:`1px solid ${T.cardBd}`,boxShadow:T.shadow,width:"220px"}}>
       <div style={{fontSize:"13px",fontWeight:"600",color:T.text,marginBottom:"14px"}}>🎨 배경 색상</div>
       <div style={{display:"flex",gap:"10px",flexWrap:"wrap",justifyContent:"center"}}>
         {BG_THEMES.map(t=><button key={t.id} onClick={()=>{setThemeId(t.id);setShowThemePanel(false);}} title={t.label} style={{width:"40px",height:"40px",borderRadius:"50%",border:themeId===t.id?"3px solid #6366F1":"3px solid transparent",background:t.id==="transparent"?"repeating-conic-gradient(#d0d0d0 0% 25%, #f0f0f0 0% 50%) 0 0 / 10px 10px":t.swatch,cursor:"pointer",transition:"all 0.15s",boxShadow:themeId===t.id?"0 0 0 2px rgba(99,102,241,0.3)":"none"}}/>)}
@@ -255,7 +255,7 @@ export default function CharacterMap() {
     </div>}
 
     {/* Zoom - bottom left */}
-    <div style={{position:"absolute",bottom:"70px",left:"16px",zIndex:100,display:"flex",gap:"4px"}}>
+    <div className="zoom-area" style={{position:"absolute",bottom:"70px",left:"16px",zIndex:100,display:"flex",gap:"4px"}}>
       <button onClick={()=>setZoom(z=>Math.min(3,z*1.2))} style={{...btnS,padding:"8px 14px",fontSize:"16px",lineHeight:"1",borderRadius:"10px"}}>+</button>
       <button onClick={()=>{setZoom(1);setPan({x:0,y:0});}} style={{...btnS,padding:"8px 14px",fontSize:"11px",borderRadius:"10px"}}>{Math.round(zoom*100)}%</button>
       <button onClick={()=>setZoom(z=>Math.max(0.3,z*0.8))} style={{...btnS,padding:"8px 14px",fontSize:"16px",lineHeight:"1",borderRadius:"10px"}}>−</button>
@@ -299,7 +299,7 @@ export default function CharacterMap() {
     </div></div>}
 
     {/* Footer credit */}
-    <style>{`.credit-line{position:absolute;left:50%;transform:translateX(-50%);z-index:10;white-space:nowrap;pointer-events:none;bottom:8px;font-size:15px;opacity:0.45}@media(max-width:768px){.credit-line{bottom:130px;font-size:10px}}`}</style>
+    <style>{`.credit-line{position:absolute;left:50%;transform:translateX(-50%);z-index:10;white-space:nowrap;pointer-events:none;bottom:8px;font-size:15px;opacity:0.45}@media(max-width:768px){.credit-line{bottom:112px;font-size:10px}}.fab-area{bottom:24px!important}@media(max-width:768px){.fab-area{bottom:70px!important}}.zoom-area{bottom:24px!important}@media(max-width:768px){.zoom-area{bottom:70px!important}}.theme-area{bottom:90px!important}@media(max-width:768px){.theme-area{bottom:136px!important}}`}</style>
     <div className="credit-line" style={{color:T.textMut}}>이 사이트는 Claude를 통해 제작되었습니다.</div>
 
     {/* Info Modal */}
