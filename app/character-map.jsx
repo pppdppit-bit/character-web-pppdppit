@@ -299,7 +299,7 @@ export default function CharacterMap() {
     </div></div>}
 
     {/* Footer credit */}
-    <style>{`.credit-line{position:absolute;left:50%;transform:translateX(-50%);z-index:10;white-space:nowrap;pointer-events:none;bottom:8px;font-size:15px;opacity:0.45}@media(max-width:768px){.credit-line{bottom:100px;font-size:10px}}`}</style>
+    <style>{`.credit-line{position:absolute;left:50%;transform:translateX(-50%);z-index:10;white-space:nowrap;pointer-events:none;bottom:8px;font-size:15px;opacity:0.45}@media(max-width:768px){.credit-line{bottom:130px;font-size:10px}}`}</style>
     <div className="credit-line" style={{color:T.textMut}}>이 사이트는 Claude를 통해 제작되었습니다.</div>
 
     {/* Info Modal */}
