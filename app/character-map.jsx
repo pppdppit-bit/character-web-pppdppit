@@ -113,12 +113,18 @@ export default function CharacterMap() {
   const handleMouseMove=useCallback(e=>{if(dragging){const p=getSvgPoint(e.clientX,e.clientY);setCharacters(pr=>pr.map(c=>c.id===dragging?{...c,x:p.x-dragOffset.x,y:p.y-dragOffset.y}:c));}else if(isPanning)setPan({x:e.clientX-panStart.x,y:e.clientY-panStart.y});},[dragging,dragOffset,getSvgPoint,isPanning,panStart]);
   const handleMouseUp=useCallback(()=>{setDragging(null);setIsPanning(false);},[]);
   const handleCanvasMouseDown=useCallback(e=>{if(connectingFrom){setConnectingFrom(null);return;}if(e.target===svgRef.current||e.target.tagName==="rect"){setSelectedChar(null);setIsPanning(true);setPanStart({x:e.clientX-pan.x,y:e.clientY-pan.y});}},[connectingFrom,pan]);
-  const handleWheel=useCallback(e=>{e.preventDefault();setZoom(p=>Math.max(0.3,Math.min(3,p*(e.deltaY>0?0.9:1.1))));},[]);
+  const handleWheel=useCallback(e=>{e.preventDefault();
+    const s=svgRef.current;if(!s)return;const r=s.getBoundingClientRect();
+    const mx=e.clientX-r.left,my=e.clientY-r.top;
+    const factor=e.deltaY>0?0.9:1.1;
+    setZoom(prev=>{const nz=Math.max(0.3,Math.min(3,prev*factor));
+      setPan(pp=>({x:mx-(mx-pp.x)*(nz/prev),y:my-(my-pp.y)*(nz/prev)}));return nz;});
+  },[]);
   useEffect(()=>{const s=svgRef.current;if(s){s.addEventListener("wheel",handleWheel,{passive:false});return()=>s.removeEventListener("wheel",handleWheel);}},[handleWheel]);
 
   // Touch support
   const lastTapRef=useRef({time:0,id:null});
-  const pinchRef=useRef({dist:0,zoom:1});
+  const pinchRef=useRef({dist:0,zoom:1,mx:0,my:0});
   const getTouchXY=(t)=>({clientX:t.touches[0].clientX,clientY:t.touches[0].clientY});
   const getPinchDist=(t)=>{const dx=t.touches[0].clientX-t.touches[1].clientX,dy=t.touches[0].clientY-t.touches[1].clientY;return Math.sqrt(dx*dx+dy*dy);};
 
@@ -131,7 +137,7 @@ export default function CharacterMap() {
   },[characters,connectingFrom,getSvgPoint]);
 
   const handleTouchMove=useCallback(e=>{e.preventDefault();
-    if(e.touches.length===2){const d=getPinchDist(e);setZoom(Math.max(0.3,Math.min(3,pinchRef.current.zoom*(d/pinchRef.current.dist))));return;}
+    if(e.touches.length===2){const d=getPinchDist(e);const nz=Math.max(0.3,Math.min(3,pinchRef.current.zoom*(d/pinchRef.current.dist)));const{mx,my}=pinchRef.current;const oz=pinchRef.current.zoom;setPan(pp=>({x:mx-(mx-pp.x)*(nz/oz),y:my-(my-pp.y)*(nz/oz)}));setZoom(nz);return;}
     if(e.touches.length!==1)return;const{clientX,clientY}=getTouchXY(e);
     if(dragging){const p=getSvgPoint(clientX,clientY);setCharacters(pr=>pr.map(c=>c.id===dragging?{...c,x:p.x-dragOffset.x,y:p.y-dragOffset.y}:c));}
     else if(isPanning)setPan({x:clientX-panStart.x,y:clientY-panStart.y});
@@ -140,7 +146,7 @@ export default function CharacterMap() {
   const handleTouchUp=useCallback(()=>{setDragging(null);setIsPanning(false);},[]);
 
   const handleCanvasTouchStart=useCallback(e=>{
-    if(e.touches.length===2){e.preventDefault();pinchRef.current={dist:getPinchDist(e),zoom:zoom};return;}
+    if(e.touches.length===2){e.preventDefault();const s=svgRef.current;if(!s)return;const r=s.getBoundingClientRect();const mx=(e.touches[0].clientX+e.touches[1].clientX)/2-r.left;const my=(e.touches[0].clientY+e.touches[1].clientY)/2-r.top;pinchRef.current={dist:getPinchDist(e),zoom:zoom,mx,my};return;}
     if(connectingFrom){setConnectingFrom(null);return;}
     const touch=e.touches[0];const el=document.elementFromPoint(touch.clientX,touch.clientY);
     if(el===svgRef.current||el?.tagName==="rect"){setSelectedChar(null);setIsPanning(true);setPanStart({x:touch.clientX-pan.x,y:touch.clientY-pan.y});}
@@ -188,7 +194,7 @@ export default function CharacterMap() {
     <input ref={jsonInputRef} type="file" accept=".json" style={{display:"none"}} onChange={e=>{importJson(e.target.files[0]);e.target.value="";setShowFab(false);}}/>
 
     {/* Top center: big title */}
-    <div onClick={()=>{setTempTitle(projectTitle);setTempLogo(projectLogo);setShowTitleModal(true);}} style={{position:"absolute",top:"12px",left:"50%",transform:"translateX(-50%)",zIndex:100,cursor:"pointer",display:"flex",alignItems:"center",gap:"8px",padding:(projectTitle||projectLogo)?"10px 36px":"12px 28px",borderRadius:"20px",border:`1px dashed ${(projectTitle||projectLogo)?"transparent":T.btnSecBd}`,background:(projectTitle||projectLogo)?"transparent":T.btnSec,transition:"all 0.2s",maxWidth:"80vw"}} onMouseEnter={e=>{e.currentTarget.style.background=T.input;e.currentTarget.style.borderColor=T.btnSecBd;}} onMouseLeave={e=>{e.currentTarget.style.background=(projectTitle||projectLogo)?"transparent":T.btnSec;e.currentTarget.style.borderColor=(projectTitle||projectLogo)?"transparent":T.btnSecBd;}}>
+    <div onClick={()=>{setTempTitle(projectTitle);setTempLogo(projectLogo);setShowTitleModal(true);}} style={{position:"absolute",top:"52px",left:"50%",transform:"translateX(-50%)",zIndex:100,cursor:"pointer",display:"flex",alignItems:"center",gap:"8px",padding:(projectTitle||projectLogo)?"10px 36px":"12px 28px",borderRadius:"20px",border:`1px dashed ${(projectTitle||projectLogo)?"transparent":T.btnSecBd}`,background:(projectTitle||projectLogo)?"transparent":T.btnSec,transition:"all 0.2s",maxWidth:"80vw"}} onMouseEnter={e=>{e.currentTarget.style.background=T.input;e.currentTarget.style.borderColor=T.btnSecBd;}} onMouseLeave={e=>{e.currentTarget.style.background=(projectTitle||projectLogo)?"transparent":T.btnSec;e.currentTarget.style.borderColor=(projectTitle||projectLogo)?"transparent":T.btnSecBd;}}>
       {projectLogo&&<img src={projectLogo} alt="" style={{height:"74px",maxWidth:"230px",objectFit:"contain",borderRadius:"10px"}}/>}
       {projectTitle?<span style={{fontSize:"28px",fontWeight:"900",color:T.text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",letterSpacing:"-0.8px",lineHeight:"1.1"}}>{projectTitle}</span>:!projectLogo?<span style={{fontSize:"14px",color:T.textMut}}>✏️ 관계도 이름을 설정하세요</span>:null}
     </div>
@@ -220,7 +226,7 @@ export default function CharacterMap() {
     </svg>
 
     {/* Bottom-right FAB */}
-    <div style={{position:"absolute",bottom:"24px",right:"24px",zIndex:200,display:"flex",flexDirection:"column",alignItems:"flex-end",gap:"8px"}}>
+    <div style={{position:"absolute",bottom:"40px",right:"16px",zIndex:200,display:"flex",flexDirection:"column",alignItems:"flex-end",gap:"8px"}}>
       {showFab&&<>
         <button onClick={()=>{setShowThemePanel(p=>!p);setShowFab(false);}} style={{...btnS,padding:"10px 18px",fontSize:"13px",display:"flex",alignItems:"center",gap:"8px",boxShadow:T.pShadow,borderRadius:"14px"}}>🎨 배경 색상</button>
         <button onClick={()=>{exportToPng();setShowFab(false);}} disabled={isExporting} style={{...btnS,padding:"10px 18px",fontSize:"13px",display:"flex",alignItems:"center",gap:"8px",boxShadow:T.pShadow,borderRadius:"14px",background:"linear-gradient(135deg,rgba(34,197,94,0.15),rgba(34,197,94,0.05))",borderColor:"rgba(34,197,94,0.3)",color:"#22C55E"}}>{isExporting?"⏳":"📸"} PNG 저장</button>
@@ -233,7 +239,7 @@ export default function CharacterMap() {
     </div>
 
     {/* Theme panel - opens UPWARD from bottom-right, inside viewport */}
-    {showThemePanel&&<div style={{position:"absolute",bottom:"90px",right:"24px",zIndex:200,background:`linear-gradient(145deg,${T.card[0]},${T.card[1]})`,borderRadius:"16px",padding:"20px",border:`1px solid ${T.cardBd}`,boxShadow:T.shadow,width:"220px"}}>
+    {showThemePanel&&<div style={{position:"absolute",bottom:"106px",right:"16px",zIndex:200,background:`linear-gradient(145deg,${T.card[0]},${T.card[1]})`,borderRadius:"16px",padding:"20px",border:`1px solid ${T.cardBd}`,boxShadow:T.shadow,width:"220px"}}>
       <div style={{fontSize:"13px",fontWeight:"600",color:T.text,marginBottom:"14px"}}>🎨 배경 색상</div>
       <div style={{display:"flex",gap:"10px",flexWrap:"wrap",justifyContent:"center"}}>
         {BG_THEMES.map(t=><button key={t.id} onClick={()=>{setThemeId(t.id);setShowThemePanel(false);}} title={t.label} style={{width:"40px",height:"40px",borderRadius:"50%",border:themeId===t.id?"3px solid #6366F1":"3px solid transparent",background:t.id==="transparent"?"repeating-conic-gradient(#d0d0d0 0% 25%, #f0f0f0 0% 50%) 0 0 / 10px 10px":t.swatch,cursor:"pointer",transition:"all 0.15s",boxShadow:themeId===t.id?"0 0 0 2px rgba(99,102,241,0.3)":"none"}}/>)}
@@ -242,7 +248,7 @@ export default function CharacterMap() {
     </div>}
 
     {/* Zoom - bottom left */}
-    <div style={{position:"absolute",bottom:"24px",left:"24px",zIndex:100,display:"flex",gap:"4px"}}>
+    <div style={{position:"absolute",bottom:"40px",left:"16px",zIndex:100,display:"flex",gap:"4px"}}>
       <button onClick={()=>setZoom(z=>Math.min(3,z*1.2))} style={{...btnS,padding:"8px 14px",fontSize:"16px",lineHeight:"1",borderRadius:"10px"}}>+</button>
       <button onClick={()=>setZoom(1)} style={{...btnS,padding:"8px 14px",fontSize:"11px",borderRadius:"10px"}}>{Math.round(zoom*100)}%</button>
       <button onClick={()=>setZoom(z=>Math.max(0.3,z*0.8))} style={{...btnS,padding:"8px 14px",fontSize:"16px",lineHeight:"1",borderRadius:"10px"}}>−</button>
@@ -255,7 +261,6 @@ export default function CharacterMap() {
       <div style={{display:"flex",gap:"6px"}}><button onClick={()=>openEditModal(selectedChar)} style={{...btnS,padding:"8px 14px",fontSize:"12px",flex:1}}>✏️ 편집</button><button onClick={()=>setConnectingFrom(selectedChar)} style={{...btnS,padding:"8px 14px",fontSize:"12px",flex:1}}>🔗 연결</button><button onClick={(e)=>{e.stopPropagation();const id=selectedChar;const nm=ch.name;setConfirmModal({message:`"${nm}"을(를) 삭제할까요?`,onConfirm:()=>{setCharacters(p=>p.filter(c=>c.id!==id));setRelations(p=>p.filter(r=>r.from!==id&&r.to!==id));setSelectedChar(null);setConfirmModal(null);}});}} style={{...btnS,padding:"8px 14px",fontSize:"12px",borderColor:"rgba(255,80,80,0.3)",color:"#FF6B6B"}}>🗑️</button></div>
     </div>);})()}
 
-    <div style={{position:"absolute",bottom:"24px",left:"50%",transform:"translateX(-50%)",zIndex:50,padding:"8px 20px",borderRadius:"100px",background:T.help,border:`1px solid ${T.helpBd}`,color:T.textMut,fontSize:"11px"}}>클릭: 선택 | 더블클릭: 편집 | 드래그: 이동 | 스크롤: 확대/축소 | 관계 라벨 클릭: 편집</div>
 
     {/* Title Modal */}
     {showTitleModal&&<div style={modalStyle} onClick={()=>setShowTitleModal(false)}><div style={cardStyle} onClick={e=>e.stopPropagation()}>
@@ -286,44 +291,43 @@ export default function CharacterMap() {
       </div>
     </div></div>}
 
+    {/* Footer credit */}
+    <div style={{position:"absolute",bottom:"8px",left:"50%",transform:"translateX(-50%)",zIndex:10,color:T.textMut,fontSize:"10px",opacity:0.4,whiteSpace:"nowrap",pointerEvents:"none"}}>이 사이트는 Claude를 통해 제작되었습니다.</div>
+
     {/* Info Modal */}
-    {showInfo&&<div style={modalStyle} onClick={()=>setShowInfo(false)}><div style={{...cardStyle,width:"480px"}} onClick={e=>e.stopPropagation()}>
-      <h3 style={{margin:"0 0 20px",color:T.text,fontSize:"20px",fontWeight:"700"}}>인물관계도 메이커</h3>
-      <div style={{display:"flex",flexDirection:"column",gap:"16px",fontSize:"13px",color:T.textSec,lineHeight:"1.8"}}>
-        <div>
-          <div style={{fontWeight:"600",color:T.text,marginBottom:"4px",fontSize:"14px"}}>기본 조작</div>
-          <div>• 캔버스를 <b>드래그</b>하여 화면 이동, <b>스크롤</b>로 확대/축소</div>
-          <div>• 인물을 <b>클릭</b>하여 선택, <b>더블클릭</b>하여 편집</div>
-          <div>• 인물을 <b>드래그</b>하여 위치 이동</div>
+    {showInfo&&<div style={modalStyle} onClick={()=>setShowInfo(false)}><div style={{...cardStyle,width:"500px"}} onClick={e=>e.stopPropagation()}>
+      <h3 style={{margin:"0 0 24px",color:T.text,fontSize:"20px",fontWeight:"800",textAlign:"center"}}>사이트 이용방법</h3>
+      <div style={{display:"flex",flexDirection:"column",gap:"18px",fontSize:"13px",color:T.text,opacity:0.85,lineHeight:"1.9"}}>
+        <div style={{padding:"14px 16px",borderRadius:"14px",background:T.input}}>
+          <div style={{fontWeight:"700",color:T.text,marginBottom:"6px",fontSize:"14px"}}>👤 인물 추가</div>
+          <div>우측 하단 <span style={{fontWeight:"600"}}>+ 버튼</span> → <span style={{fontWeight:"600"}}>인물 추가</span>를 통해 캐릭터의 이름, 사진, 설명을 설정해주세요. 테두리의 색깔과 사진의 크기도 변경 가능합니다.</div>
         </div>
-        <div>
-          <div style={{fontWeight:"600",color:T.text,marginBottom:"4px",fontSize:"14px"}}>인물 관리</div>
-          <div>• 우측 하단 <b>+</b> 버튼 → <b>인물 추가</b>: 이름, 설명, 프로필 사진, 크기, 색상 설정</div>
-          <div>• 인물 선택 후 좌측 하단 패널에서 편집·연결·삭제 가능</div>
+        <div style={{padding:"14px 16px",borderRadius:"14px",background:T.input}}>
+          <div style={{fontWeight:"700",color:T.text,marginBottom:"6px",fontSize:"14px"}}>🔗 관계 연결</div>
+          <div>인물 클릭 → <span style={{fontWeight:"600"}}>관계 연결</span>을 통해 인물 간의 관계를 설정해주세요. <span style={{fontWeight:"600"}}>기타</span> 항목을 통해 관계의 이름, 색깔, 선 종류 커스텀도 가능합니다.</div>
         </div>
-        <div>
-          <div style={{fontWeight:"600",color:T.text,marginBottom:"4px",fontSize:"14px"}}>관계 연결</div>
-          <div>• 인물 선택 → <b>🔗 관계 연결</b> → 다른 인물 클릭</div>
-          <div>• 8가지 관계 유형 (가족, 연인, 친구, 라이벌, 적, 스승/제자, 동료, 기타)</div>
-          <div>• "기타" 선택 시 커스텀 라벨, 색상, 선 종류(실선/점선/화살표/구불구불/지그재그) 설정 가능</div>
-          <div>• 관계 라벨을 <b>클릭</b>하면 관계 편집 가능</div>
+        <div style={{padding:"14px 16px",borderRadius:"14px",background:T.input}}>
+          <div style={{fontWeight:"700",color:T.text,marginBottom:"6px",fontSize:"14px"}}>✏️ 편집 · 수정</div>
+          <div>인물 또는 관계를 클릭해 해당 항목의 수정 또는 삭제가 가능합니다. <span style={{color:"#EF4444",fontSize:"11px"}}>(삭제 되돌리기 불가)</span></div>
         </div>
-        <div>
-          <div style={{fontWeight:"600",color:T.text,marginBottom:"4px",fontSize:"14px"}}>저장 · 내보내기</div>
-          <div>• <b>📸 PNG 저장</b>: 관계도를 이미지로 다운로드 (배경 투명도 지원)</div>
-          <div>• <b>💾 내보내기</b>: 작업 내용을 JSON 파일로 저장 (프로필 사진 포함)</div>
-          <div>• <b>📂 불러오기</b>: 저장한 JSON 파일을 열어 이어서 편집</div>
+        <div style={{padding:"14px 16px",borderRadius:"14px",background:T.input}}>
+          <div style={{fontWeight:"700",color:T.text,marginBottom:"6px",fontSize:"14px"}}>🎨 테마 설정</div>
+          <div><span style={{fontWeight:"600"}}>+ 버튼</span> → <span style={{fontWeight:"600"}}>배경 색상</span>을 통해 배경색 변경이 가능합니다. 체커보드 클릭 시 배경이 투명화된 PNG로 저장 가능합니다.</div>
         </div>
-        <div>
-          <div style={{fontWeight:"600",color:T.text,marginBottom:"4px",fontSize:"14px"}}>기타 기능</div>
-          <div>• 상단 중앙 클릭: 관계도 이름 · 로고 설정 (PNG에도 반영)</div>
-          <div>• <b>🎨 배경 색상</b>: 9가지 테마 + 투명 배경</div>
+        <div style={{padding:"14px 16px",borderRadius:"14px",background:T.input}}>
+          <div style={{fontWeight:"700",color:T.text,marginBottom:"6px",fontSize:"14px"}}>📛 관계도 이름 설정</div>
+          <div>사이트 상단 중앙에 있는 공간을 클릭해 관계도의 이름을 바꿀 수 있습니다. 텍스트 대신 이미지 삽입도 가능합니다.</div>
         </div>
-        <div style={{fontSize:"11px",color:T.textMut,borderTop:`1px solid ${T.cardBd}`,paddingTop:"12px"}}>
-          모든 데이터는 브라우저에서만 처리되며, 서버에 저장되지 않습니다. 작업 후 반드시 💾 내보내기로 저장해 주세요.
+        <div style={{padding:"14px 16px",borderRadius:"14px",background:T.input}}>
+          <div style={{fontWeight:"700",color:T.text,marginBottom:"6px",fontSize:"14px"}}>🖼️ PNG 저장</div>
+          <div>관계도를 완성했다면 <span style={{fontWeight:"600"}}>+ 버튼</span> → <span style={{fontWeight:"600"}}>PNG 저장</span>을 통해 완성본 이미지를 다운로드할 수 있습니다.</div>
+        </div>
+        <div style={{padding:"14px 16px",borderRadius:"14px",background:T.input}}>
+          <div style={{fontWeight:"700",color:T.text,marginBottom:"6px",fontSize:"14px"}}>💾 내보내기 / 불러오기</div>
+          <div>관계도를 나중에 이어서 수정하고 싶거나 다른 사람과 공유하고 싶다면, <span style={{fontWeight:"600"}}>+ 버튼</span>에서 이 두 가지 기능을 사용하세요.</div>
         </div>
       </div>
-      <div style={{display:"flex",justifyContent:"flex-end",marginTop:"20px"}}>
+      <div style={{display:"flex",justifyContent:"flex-end",marginTop:"24px"}}>
         <button onClick={()=>setShowInfo(false)} style={btnP}>확인</button>
       </div>
     </div></div>}
