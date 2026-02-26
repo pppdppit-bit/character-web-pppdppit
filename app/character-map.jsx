@@ -116,7 +116,7 @@ export default function CharacterMap() {
   const handleWheel=useCallback(e=>{e.preventDefault();
     const s=svgRef.current;if(!s)return;const r=s.getBoundingClientRect();
     const mx=e.clientX-r.left,my=e.clientY-r.top;
-    const factor=e.deltaY>0?0.9:1.1;
+    const factor=e.deltaY>0?0.95:1.05;
     setZoom(prev=>{const nz=Math.max(0.3,Math.min(3,prev*factor));
       setPan(pp=>({x:mx-(mx-pp.x)*(nz/prev),y:my-(my-pp.y)*(nz/prev)}));return nz;});
   },[]);
@@ -124,7 +124,7 @@ export default function CharacterMap() {
 
   // Touch support
   const lastTapRef=useRef({time:0,id:null});
-  const pinchRef=useRef({dist:0,zoom:1,mx:0,my:0});
+  const pinchRef=useRef({dist:0,zoom:1,mx:0,my:0,panX:0,panY:0});
   const getTouchXY=(t)=>({clientX:t.touches[0].clientX,clientY:t.touches[0].clientY});
   const getPinchDist=(t)=>{const dx=t.touches[0].clientX-t.touches[1].clientX,dy=t.touches[0].clientY-t.touches[1].clientY;return Math.sqrt(dx*dx+dy*dy);};
 
@@ -137,7 +137,14 @@ export default function CharacterMap() {
   },[characters,connectingFrom,getSvgPoint]);
 
   const handleTouchMove=useCallback(e=>{e.preventDefault();
-    if(e.touches.length===2){const d=getPinchDist(e);const nz=Math.max(0.3,Math.min(3,pinchRef.current.zoom*(d/pinchRef.current.dist)));const{mx,my}=pinchRef.current;const oz=pinchRef.current.zoom;setPan(pp=>({x:mx-(mx-pp.x)*(nz/oz),y:my-(my-pp.y)*(nz/oz)}));setZoom(nz);return;}
+    if(e.touches.length===2){
+      const d=getPinchDist(e);const scale=d/pinchRef.current.dist;
+      const nz=Math.max(0.3,Math.min(3,pinchRef.current.zoom*scale));
+      const{mx,my,panX,panY,zoom:oz}=pinchRef.current;
+      const ratio=nz/oz;
+      setPan({x:mx-(mx-panX)*ratio,y:my-(my-panY)*ratio});
+      setZoom(nz);return;
+    }
     if(e.touches.length!==1)return;const{clientX,clientY}=getTouchXY(e);
     if(dragging){const p=getSvgPoint(clientX,clientY);setCharacters(pr=>pr.map(c=>c.id===dragging?{...c,x:p.x-dragOffset.x,y:p.y-dragOffset.y}:c));}
     else if(isPanning)setPan({x:clientX-panStart.x,y:clientY-panStart.y});
@@ -146,7 +153,7 @@ export default function CharacterMap() {
   const handleTouchUp=useCallback(()=>{setDragging(null);setIsPanning(false);},[]);
 
   const handleCanvasTouchStart=useCallback(e=>{
-    if(e.touches.length===2){e.preventDefault();const s=svgRef.current;if(!s)return;const r=s.getBoundingClientRect();const mx=(e.touches[0].clientX+e.touches[1].clientX)/2-r.left;const my=(e.touches[0].clientY+e.touches[1].clientY)/2-r.top;pinchRef.current={dist:getPinchDist(e),zoom:zoom,mx,my};return;}
+    if(e.touches.length===2){e.preventDefault();const s=svgRef.current;if(!s)return;const r=s.getBoundingClientRect();const mx=(e.touches[0].clientX+e.touches[1].clientX)/2-r.left;const my=(e.touches[0].clientY+e.touches[1].clientY)/2-r.top;pinchRef.current={dist:getPinchDist(e),zoom:zoom,mx,my,panX:pan.x,panY:pan.y};return;}
     if(connectingFrom){setConnectingFrom(null);return;}
     const touch=e.touches[0];const el=document.elementFromPoint(touch.clientX,touch.clientY);
     if(el===svgRef.current||el?.tagName==="rect"){setSelectedChar(null);setIsPanning(true);setPanStart({x:touch.clientX-pan.x,y:touch.clientY-pan.y});}
@@ -226,7 +233,7 @@ export default function CharacterMap() {
     </svg>
 
     {/* Bottom-right FAB */}
-    <div style={{position:"absolute",bottom:"40px",right:"16px",zIndex:200,display:"flex",flexDirection:"column",alignItems:"flex-end",gap:"8px"}}>
+    <div style={{position:"absolute",bottom:"70px",right:"16px",zIndex:200,display:"flex",flexDirection:"column",alignItems:"flex-end",gap:"8px"}}>
       {showFab&&<>
         <button onClick={()=>{setShowThemePanel(p=>!p);setShowFab(false);}} style={{...btnS,padding:"10px 18px",fontSize:"13px",display:"flex",alignItems:"center",gap:"8px",boxShadow:T.pShadow,borderRadius:"14px"}}>🎨 배경 색상</button>
         <button onClick={()=>{exportToPng();setShowFab(false);}} disabled={isExporting} style={{...btnS,padding:"10px 18px",fontSize:"13px",display:"flex",alignItems:"center",gap:"8px",boxShadow:T.pShadow,borderRadius:"14px",background:"linear-gradient(135deg,rgba(34,197,94,0.15),rgba(34,197,94,0.05))",borderColor:"rgba(34,197,94,0.3)",color:"#22C55E"}}>{isExporting?"⏳":"📸"} PNG 저장</button>
@@ -239,7 +246,7 @@ export default function CharacterMap() {
     </div>
 
     {/* Theme panel - opens UPWARD from bottom-right, inside viewport */}
-    {showThemePanel&&<div style={{position:"absolute",bottom:"106px",right:"16px",zIndex:200,background:`linear-gradient(145deg,${T.card[0]},${T.card[1]})`,borderRadius:"16px",padding:"20px",border:`1px solid ${T.cardBd}`,boxShadow:T.shadow,width:"220px"}}>
+    {showThemePanel&&<div style={{position:"absolute",bottom:"136px",right:"16px",zIndex:200,background:`linear-gradient(145deg,${T.card[0]},${T.card[1]})`,borderRadius:"16px",padding:"20px",border:`1px solid ${T.cardBd}`,boxShadow:T.shadow,width:"220px"}}>
       <div style={{fontSize:"13px",fontWeight:"600",color:T.text,marginBottom:"14px"}}>🎨 배경 색상</div>
       <div style={{display:"flex",gap:"10px",flexWrap:"wrap",justifyContent:"center"}}>
         {BG_THEMES.map(t=><button key={t.id} onClick={()=>{setThemeId(t.id);setShowThemePanel(false);}} title={t.label} style={{width:"40px",height:"40px",borderRadius:"50%",border:themeId===t.id?"3px solid #6366F1":"3px solid transparent",background:t.id==="transparent"?"repeating-conic-gradient(#d0d0d0 0% 25%, #f0f0f0 0% 50%) 0 0 / 10px 10px":t.swatch,cursor:"pointer",transition:"all 0.15s",boxShadow:themeId===t.id?"0 0 0 2px rgba(99,102,241,0.3)":"none"}}/>)}
@@ -248,9 +255,9 @@ export default function CharacterMap() {
     </div>}
 
     {/* Zoom - bottom left */}
-    <div style={{position:"absolute",bottom:"40px",left:"16px",zIndex:100,display:"flex",gap:"4px"}}>
+    <div style={{position:"absolute",bottom:"70px",left:"16px",zIndex:100,display:"flex",gap:"4px"}}>
       <button onClick={()=>setZoom(z=>Math.min(3,z*1.2))} style={{...btnS,padding:"8px 14px",fontSize:"16px",lineHeight:"1",borderRadius:"10px"}}>+</button>
-      <button onClick={()=>setZoom(1)} style={{...btnS,padding:"8px 14px",fontSize:"11px",borderRadius:"10px"}}>{Math.round(zoom*100)}%</button>
+      <button onClick={()=>{setZoom(1);setPan({x:0,y:0});}} style={{...btnS,padding:"8px 14px",fontSize:"11px",borderRadius:"10px"}}>{Math.round(zoom*100)}%</button>
       <button onClick={()=>setZoom(z=>Math.max(0.3,z*0.8))} style={{...btnS,padding:"8px 14px",fontSize:"16px",lineHeight:"1",borderRadius:"10px"}}>−</button>
     </div>
 
