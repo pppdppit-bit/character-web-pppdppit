@@ -74,7 +74,7 @@ export default function CharacterMap() {
       let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
       characters.forEach(c=>{const s=SIZE_LEVELS[c.sizeLevel||2];minX=Math.min(minX,c.x-s.radius-40);minY=Math.min(minY,c.y-s.radius-20);maxX=Math.max(maxX,c.x+s.radius+40);maxY=Math.max(maxY,c.y+s.radius+50);});
       const pad=70;minX-=pad;minY-=pad;maxX+=pad;maxY+=pad;
-      const hasTitle=projectTitle||projectLogo;if(hasTitle)minY-=50;
+      const hasTitle=projectTitle||projectLogo;if(hasTitle)minY-=80;
       const width=maxX-minX,height=maxY-minY,sc=2;
       const canvas=document.createElement("canvas");canvas.width=width*sc;canvas.height=height*sc;
       const ctx=canvas.getContext("2d");ctx.scale(sc,sc);ctx.translate(-minX,-minY);
@@ -82,7 +82,7 @@ export default function CharacterMap() {
       if(!isTransparent){ctx.fillStyle=T.grid;for(let gx=Math.floor(minX/40)*40;gx<maxX;gx+=40)for(let gy=Math.floor(minY/40)*40;gy<maxY;gy+=40){ctx.beginPath();ctx.arc(gx+20,gy+20,0.8,0,Math.PI*2);ctx.fill();}}
 
       // Title (bigger: 32px)
-      if(hasTitle){const cx=(minX+maxX)/2,ty=minY+50;
+      if(hasTitle){const cx=(minX+maxX)/2,ty=minY+55;
         if(projectLogo){await new Promise(resolve=>{const li=new Image();li.crossOrigin="anonymous";li.onload=()=>{const lh=96,lw=(li.naturalWidth/li.naturalHeight)*lh;ctx.save();ctx.font="900 36px 'Noto Sans KR',sans-serif";const tw=projectTitle?ctx.measureText(projectTitle).width:0;const totalW=lw+(projectTitle?8+tw:0);const sx=cx-totalW/2;ctx.drawImage(li,sx,ty-lh/2,lw,lh);if(projectTitle){ctx.fillStyle=T.labelTxt;ctx.textAlign="left";ctx.textBaseline="middle";ctx.fillText(projectTitle,sx+lw+8,ty);}ctx.restore();resolve();};li.onerror=()=>{if(projectTitle){ctx.save();ctx.fillStyle=T.labelTxt;ctx.font="900 36px 'Noto Sans KR',sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(projectTitle,cx,ty);ctx.restore();}resolve();};li.src=projectLogo;});}
         else if(projectTitle){ctx.save();ctx.fillStyle=T.labelTxt;ctx.font="900 36px 'Noto Sans KR',sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(projectTitle,cx,ty);ctx.restore();}}
 
