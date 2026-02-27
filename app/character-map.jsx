@@ -73,7 +73,7 @@ export default function CharacterMap() {
     try{
       let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
       characters.forEach(c=>{const s=SIZE_LEVELS[c.sizeLevel||2];minX=Math.min(minX,c.x-s.radius-40);minY=Math.min(minY,c.y-s.radius-20);maxX=Math.max(maxX,c.x+s.radius+40);maxY=Math.max(maxY,c.y+s.radius+50);});
-      const pad=120;minX-=pad;minY-=pad;maxX+=pad;maxY+=pad;
+      const pad=70;minX-=pad;minY-=pad;maxX+=pad;maxY+=pad;
       const hasTitle=projectTitle||projectLogo;if(hasTitle)minY-=50;
       const width=maxX-minX,height=maxY-minY,sc=2;
       const canvas=document.createElement("canvas");canvas.width=width*sc;canvas.height=height*sc;
@@ -83,8 +83,8 @@ export default function CharacterMap() {
 
       // Title (bigger: 32px)
       if(hasTitle){const cx=(minX+maxX)/2,ty=minY+50;
-        if(projectLogo){await new Promise(resolve=>{const li=new Image();li.crossOrigin="anonymous";li.onload=()=>{const lh=74,lw=(li.naturalWidth/li.naturalHeight)*lh;ctx.save();ctx.font="900 28px 'Noto Sans KR',sans-serif";const tw=projectTitle?ctx.measureText(projectTitle).width:0;const totalW=lw+(projectTitle?8+tw:0);const sx=cx-totalW/2;ctx.drawImage(li,sx,ty-lh/2,lw,lh);if(projectTitle){ctx.fillStyle=T.labelTxt;ctx.textAlign="left";ctx.textBaseline="middle";ctx.fillText(projectTitle,sx+lw+8,ty);}ctx.restore();resolve();};li.onerror=()=>{if(projectTitle){ctx.save();ctx.fillStyle=T.labelTxt;ctx.font="900 28px 'Noto Sans KR',sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(projectTitle,cx,ty);ctx.restore();}resolve();};li.src=projectLogo;});}
-        else if(projectTitle){ctx.save();ctx.fillStyle=T.labelTxt;ctx.font="900 28px 'Noto Sans KR',sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(projectTitle,cx,ty);ctx.restore();}}
+        if(projectLogo){await new Promise(resolve=>{const li=new Image();li.crossOrigin="anonymous";li.onload=()=>{const lh=96,lw=(li.naturalWidth/li.naturalHeight)*lh;ctx.save();ctx.font="900 36px 'Noto Sans KR',sans-serif";const tw=projectTitle?ctx.measureText(projectTitle).width:0;const totalW=lw+(projectTitle?8+tw:0);const sx=cx-totalW/2;ctx.drawImage(li,sx,ty-lh/2,lw,lh);if(projectTitle){ctx.fillStyle=T.labelTxt;ctx.textAlign="left";ctx.textBaseline="middle";ctx.fillText(projectTitle,sx+lw+8,ty);}ctx.restore();resolve();};li.onerror=()=>{if(projectTitle){ctx.save();ctx.fillStyle=T.labelTxt;ctx.font="900 36px 'Noto Sans KR',sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(projectTitle,cx,ty);ctx.restore();}resolve();};li.src=projectLogo;});}
+        else if(projectTitle){ctx.save();ctx.fillStyle=T.labelTxt;ctx.font="900 36px 'Noto Sans KR',sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(projectTitle,cx,ty);ctx.restore();}}
 
       // Relations (NO shadow/glow on arrows)
       relations.forEach(rel=>{const fc=characters.find(c=>c.id===rel.from),tc=characters.find(c=>c.id===rel.to);if(!fc||!tc)return;const color=getRelColor(rel),ls=rel.lineStyle||"solid";
