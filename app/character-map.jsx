@@ -12,11 +12,11 @@ const BG_THEMES = [
   { id: "transparent", label: "투명", bg: ["transparent","transparent","transparent"], grid: "rgba(0,0,0,0.06)", text: "#333", textSec: "#666", textMut: "#999", card: ["#FFFFFF","#F5F7FA"], panel: ["rgba(255,255,255,0.97)","rgba(245,247,250,0.97)"], input: "rgba(0,0,0,0.04)", inputBd: "rgba(0,0,0,0.12)", btnSec: "rgba(0,0,0,0.04)", btnSecBd: "rgba(0,0,0,0.12)", btnSecC: "#555", label: "rgba(255,255,255,0.92)", labelBd: "rgba(0,0,0,0.08)", labelTxt: "#333", pill: "rgba(255,255,255,0.92)", nodeStr: "rgba(0,0,0,0.1)", selStr: "#333", help: "rgba(255,255,255,0.8)", helpBd: "rgba(0,0,0,0.06)", overlay: "rgba(255,255,255,0.6)", cardBd: "rgba(0,0,0,0.08)", shadow: "0 25px 60px rgba(0,0,0,0.12)", pShadow: "0 15px 40px rgba(0,0,0,0.08)", wm: "rgba(0,0,0,0.1)", swatch: "transparent" },
 ];
 
-const RELATIONSHIP_TYPES = { family:{label:"가족",color:"#E8A87C"}, lover:{label:"연인",color:"#F25C78"}, friend:{label:"친구",color:"#85CDCA"}, rival:{label:"라이벌",color:"#D4A5FF"}, enemy:{label:"적",color:"#FF6B6B"}, mentor:{label:"스승/제자",color:"#F9D56E"}, colleague:{label:"동료",color:"#88B7D5"}, custom:{label:"기타",color:"#AAAAAA"} };
-const REL_COLORS_BASE = ["#AAAAAA","#EF4444","#F97316","#FB923C","#E8A87C","#F9D56E","#FBBF24","#22C55E","#34D399","#81B29A","#85CDCA","#06B6D4","#88B7D5","#6366F1","#A78BFA","#D4A5FF","#EC4899","#F25C78","#FF6B6B"];
-const LINE_STYLES = { solid:{label:"실선"}, dashed:{label:"점선"}, arrowToFirst:{label:"→ 첫번째"}, arrowToSecond:{label:"→ 두번째"}, wavy:{label:"구불구불"}, zigzag:{label:"지그재그"} };
+const RELATIONSHIP_TYPES = { family:{label:"가족",color:"#E68200"}, lover:{label:"연인",color:"#EB7292"}, friend:{label:"친구",color:"#2DB78B"}, rival:{label:"라이벌",color:"#734AB2"}, enemy:{label:"적",color:"#EF4444"}, mentor:{label:"스승/제자",color:"#1359BE"}, colleague:{label:"동료",color:"#00BDE4"}, custom:{label:"기타",color:"#AAAAAA"} };
+const REL_COLORS_BASE = ["#AAAAAA","#EF4444","#F1571B","#E68200","#F8E57D","#88D54E","#1E8701","#2DB78B","#00BDE4","#1359BE","#333175","#734AB2","#B575E9","#F314CF","#EB7292","#8F5438","#628059","#55777D"];
+const LINE_STYLES = { solid:{label:"실선"}, dashed:{label:"점선"}, arrowToFirst:{label:"→ 첫번째"}, arrowToSecond:{label:"→ 두번째"}, arrowBoth:{label:"↔ 양방향"}, wavy:{label:"구불구불"}, zigzag:{label:"지그재그"} };
 const SIZE_LEVELS = [{radius:24,fontSize:14,labelWidth:70,labelFontSize:10},{radius:32,fontSize:18,labelWidth:85,labelFontSize:11},{radius:40,fontSize:22,labelWidth:100,labelFontSize:12},{radius:52,fontSize:28,labelWidth:115,labelFontSize:13},{radius:66,fontSize:34,labelWidth:135,labelFontSize:14}];
-const COLORS = ["#4A6FA5","#E8A87C","#C84B6A","#85CDCA","#F9D56E","#D4A5FF","#FF6B6B","#88B7D5","#6B8F71","#E07A5F","#3D405B","#81B29A","#F2CC8F","#A8DADC","#457B9D"];
+const COLORS = ["#EF4444","#F1571B","#E68200","#F8E57D","#88D54E","#1E8701","#2DB78B","#00BDE4","#1359BE","#333175","#734AB2","#B575E9","#F314CF","#EB7292","#8F5438","#628059","#55777D"];
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
 const getWavyPathD=(fX,fY,tX,tY)=>{const dx=tX-fX,dy=tY-fY,dist=Math.sqrt(dx*dx+dy*dy),w=Math.max(6,Math.round(dist/22)),a=10;let d=`M ${fX} ${fY}`;for(let i=1;i<=w;i++){const t=i/w,p=(i-0.5)/w,mx=fX+dx*p,my=fY+dy*p,ex=fX+dx*t,ey=fY+dy*t,nx=-dy/dist,ny=dx/dist,s=i%2===0?1:-1;d+=` Q ${mx+nx*a*s} ${my+ny*a*s} ${ex} ${ey}`;}return d;};
@@ -24,15 +24,17 @@ const getZigzagPathD=(fX,fY,tX,tY)=>{const dx=tX-fX,dy=tY-fY,dist=Math.sqrt(dx*d
 const getCurvedPathD=(fX,fY,tX,tY)=>{const dx=tX-fX,dy=tY-fY;return`M ${fX} ${fY} Q ${(fX+tX)/2-dy*0.15} ${(fY+tY)/2+dx*0.15} ${tX} ${tY}`;};
 const getMidOfCurve=(fX,fY,tX,tY)=>{const dx=tX-fX,dy=tY-fY;return{x:(fX+tX)/2-dy*0.075,y:(fY+tY)/2+dx*0.075};};
 
-const DEFAULT_CHARACTERS = [{id:"1",name:"주인공",x:400,y:300,color:"#4A6FA5",avatar:null,description:"이야기의 중심 인물",sizeLevel:2},{id:"2",name:"히로인",x:650,y:250,color:"#E8A87C",avatar:null,description:"주인공의 동반자",sizeLevel:2},{id:"3",name:"악역",x:400,y:550,color:"#C84B6A",avatar:null,description:"이야기의 갈등 요소",sizeLevel:2}];
+const DEFAULT_CHARACTERS = [{id:"1",name:"주인공",x:400,y:300,color:"#1359BE",avatar:null,description:"이야기의 중심 인물",sizeLevel:2},{id:"2",name:"히로인",x:650,y:250,color:"#EB7292",avatar:null,description:"주인공의 동반자",sizeLevel:2},{id:"3",name:"악역",x:400,y:550,color:"#EF4444",avatar:null,description:"이야기의 갈등 요소",sizeLevel:2}];
 const DEFAULT_RELATIONS = [{id:"r1",from:"1",to:"2",type:"lover",label:"",customColor:null,lineStyle:"solid"},{id:"r2",from:"1",to:"3",type:"enemy",label:"",customColor:null,lineStyle:"solid"}];
 
 export default function CharacterMap() {
   const [themeId,setThemeId]=useState("dark");const T=BG_THEMES.find(t=>t.id===themeId)||BG_THEMES[0];const isDark=themeId==="dark";
   const REL_COLORS=["BW",...REL_COLORS_BASE];
   const BW_COLOR = isDark ? "#FFFFFF" : "#222222";
-  const resolveColor = c => c === "BW" ? BW_COLOR : c;
+  const adjustForBg=(hex)=>{if(isDark||!hex||hex==="BW")return hex;const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);const lum=(0.299*r+0.587*g+0.114*b)/255;if(lum<0.55)return hex;const f=0.45/lum;return `#${Math.round(r*f).toString(16).padStart(2,"0")}${Math.round(g*f).toString(16).padStart(2,"0")}${Math.round(b*f).toString(16).padStart(2,"0")}`;};
+  const resolveColor = c => {const v = c === "BW" ? BW_COLOR : c; return adjustForBg(v);};
   const [characters,setCharacters]=useState(DEFAULT_CHARACTERS);const [relations,setRelations]=useState(DEFAULT_RELATIONS);
+  const [groups,setGroups]=useState([]);const [showGroupModal,setShowGroupModal]=useState(null);const [groupName,setGroupName]=useState("");const [groupColor,setGroupColor]=useState("#6366F1");const [groupMembers,setGroupMembers]=useState([]);
   const [dragging,setDragging]=useState(null);const [dragOffset,setDragOffset]=useState({x:0,y:0});
   const [selectedChar,setSelectedChar]=useState(null);const [connectingFrom,setConnectingFrom]=useState(null);
   const [showAddModal,setShowAddModal]=useState(false);const [showRelModal,setShowRelModal]=useState(null);const [showEditModal,setShowEditModal]=useState(null);
@@ -47,8 +49,8 @@ export default function CharacterMap() {
   const [canvasSize]=useState({width:2000,height:1500});
 
   // JSON Export/Import (zero traffic - pure client-side)
-  const exportJson=()=>{const data={projectTitle,projectLogo,themeId,characters,relations};const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`${projectTitle||"character-map"}-${new Date().toISOString().slice(0,10)}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);};
-  const importJson=(file)=>{if(!file)return;const reader=new FileReader();reader.onload=e=>{try{const data=JSON.parse(e.target.result);if(data.characters)setCharacters(data.characters);if(data.relations)setRelations(data.relations);if(data.projectTitle!==undefined)setProjectTitle(data.projectTitle);if(data.projectLogo!==undefined)setProjectLogo(data.projectLogo);if(data.themeId)setThemeId(data.themeId);setSelectedChar(null);}catch(err){alert("파일을 읽을 수 없습니다.");}};reader.readAsText(file);};
+  const exportJson=()=>{const data={projectTitle,projectLogo,themeId,characters,relations,groups};const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`${projectTitle||"character-map"}-${new Date().toISOString().slice(0,10)}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);};
+  const importJson=(file)=>{if(!file)return;const reader=new FileReader();reader.onload=e=>{try{const data=JSON.parse(e.target.result);if(data.characters)setCharacters(data.characters);if(data.relations)setRelations(data.relations);if(data.groups)setGroups(data.groups);if(data.projectTitle!==undefined)setProjectTitle(data.projectTitle);if(data.projectLogo!==undefined)setProjectLogo(data.projectLogo);if(data.themeId)setThemeId(data.themeId);setSelectedChar(null);}catch(err){alert("파일을 읽을 수 없습니다.");}};reader.readAsText(file);};
   const [newName,setNewName]=useState("");const [newDesc,setNewDesc]=useState("");const [newColor,setNewColor]=useState(COLORS[0]);const [newAvatar,setNewAvatar]=useState(null);const [newSize,setNewSize]=useState(2);
   const [editName,setEditName]=useState("");const [editDesc,setEditDesc]=useState("");const [editColor,setEditColor]=useState("");const [editAvatar,setEditAvatar]=useState(null);const [editSize,setEditSize]=useState(2);
   const [relType,setRelType]=useState("friend");const [relLabel,setRelLabel]=useState("");const [relCustomColor,setRelCustomColor]=useState(null);const [relLineStyle,setRelLineStyle]=useState("solid");
@@ -60,11 +62,13 @@ export default function CharacterMap() {
   const getRelMid=(r,f,t)=>{const ls=r.lineStyle||"solid";if(ls==="wavy"||ls==="zigzag")return{x:(f.x+t.x)/2,y:(f.y+t.y)/2};return getMidOfCurve(f.x,f.y,t.x,t.y);};
 
   const getArrowPoints=(fc,tc,targetIsTo)=>{
-    const tgt=targetIsTo?tc:fc;const s=SIZE_LEVELS[tgt.sizeLevel??2];
-    const fdx=tc.x-fc.x,fdy=tc.y-fc.y,qx=(fc.x+tc.x)/2-fdy*0.15,qy=(fc.y+tc.y)/2+fdx*0.15;
-    let tx=tgt.x-qx,ty=tgt.y-qy;const d=Math.sqrt(tx*tx+ty*ty);if(d===0)return null;
-    const nx=tx/d,ny=ty/d,tipX=tgt.x-nx*(s.radius+3),tipY=tgt.y-ny*(s.radius+3),bx=tipX-nx*14,by=tipY-ny*14,px=-ny,py=nx;
-    return{tipX,tipY,p1x:bx+px*7,p1y:by+py*7,p2x:bx-px*7,p2y:by-py*7,endX:bx,endY:by};
+    const tgt=targetIsTo?tc:fc;const src=targetIsTo?fc:tc;const s=SIZE_LEVELS[tgt.sizeLevel??2];
+    const dx=tgt.x-src.x,dy=tgt.y-src.y,d=Math.sqrt(dx*dx+dy*dy);if(d===0)return null;
+    const nx=dx/d,ny=dy/d;
+    const tipX=tgt.x-nx*(s.radius+2),tipY=tgt.y-ny*(s.radius+2);
+    const bx=tipX-nx*16,by=tipY-ny*16;
+    const px=-ny,py=nx;
+    return{tipX,tipY,p1x:bx+px*7,p1y:by+py*7,p2x:bx-px*7,p2y:by-py*7,endX:tipX-nx*10,endY:tipY-ny*10};
   };
 
   // PNG Export
@@ -86,14 +90,27 @@ export default function CharacterMap() {
         if(projectLogo){await new Promise(resolve=>{const li=new Image();li.crossOrigin="anonymous";li.onload=()=>{const lh=96,lw=(li.naturalWidth/li.naturalHeight)*lh;ctx.save();ctx.font="900 36px 'Noto Sans KR',sans-serif";const tw=projectTitle?ctx.measureText(projectTitle).width:0;const totalW=lw+(projectTitle?8+tw:0);const sx=cx-totalW/2;ctx.drawImage(li,sx,ty-lh/2,lw,lh);if(projectTitle){ctx.fillStyle=T.labelTxt;ctx.textAlign="left";ctx.textBaseline="middle";ctx.fillText(projectTitle,sx+lw+8,ty);}ctx.restore();resolve();};li.onerror=()=>{if(projectTitle){ctx.save();ctx.fillStyle=T.labelTxt;ctx.font="900 36px 'Noto Sans KR',sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(projectTitle,cx,ty);ctx.restore();}resolve();};li.src=projectLogo;});}
         else if(projectTitle){ctx.save();ctx.fillStyle=T.labelTxt;ctx.font="900 36px 'Noto Sans KR',sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(projectTitle,cx,ty);ctx.restore();}}
 
+      // Groups (metaball via offscreen canvas)
+      for(const g of groups){const gd=getGroupData(g);if(!gd)continue;const{circles}=gd;const gc=g.color;
+        const oc=document.createElement("canvas");oc.width=width;oc.height=height;const ox=oc.getContext("2d");
+        ox.fillStyle="#fff";circles.forEach(c=>{ox.beginPath();ox.arc(c.x-minX,c.y-minY,c.r,0,Math.PI*2);ox.fill();});
+        ox.filter="blur(25px)";ox.drawImage(oc,0,0);ox.filter="none";
+        const id=ox.getImageData(0,0,width,height);const px=id.data;
+        const hr=parseInt(gc.slice(1,3),16),hg=parseInt(gc.slice(3,5),16),hb=parseInt(gc.slice(5,7),16);
+        for(let i=0;i<px.length;i+=4){const a=px[i]>100?45:0;px[i]=hr;px[i+1]=hg;px[i+2]=hb;px[i+3]=a;}
+        ox.putImageData(id,0,0);ctx.drawImage(oc,minX,minY);
+        if(g.name){const gdd=getGroupData(g);if(gdd){ctx.save();ctx.globalAlpha=0.25;ctx.fillStyle=gc;const tw=g.name.length*14+16;ctx.beginPath();ctx.roundRect(gdd.minX+2,gdd.minY,tw,22,6);ctx.fill();ctx.restore();ctx.save();ctx.globalAlpha=0.9;ctx.fillStyle=gc;ctx.font="700 13px 'Noto Sans KR',sans-serif";ctx.textAlign="left";ctx.textBaseline="top";ctx.fillText(g.name,gdd.minX+10,gdd.minY+4);ctx.restore();}}}
+
       // Relations (NO shadow/glow on arrows)
       relations.forEach(rel=>{const fc=characters.find(c=>c.id===rel.from),tc=characters.find(c=>c.id===rel.to);if(!fc||!tc)return;const color=getRelColor(rel),ls=rel.lineStyle||"solid";
         const drawPath=x=>{const dx=tc.x-fc.x,dy=tc.y-fc.y,dist=Math.sqrt(dx*dx+dy*dy);if(ls==="wavy"){const w=Math.max(6,Math.round(dist/22)),a=10;x.moveTo(fc.x,fc.y);for(let i=1;i<=w;i++){const t=i/w,p=(i-0.5)/w,mx=fc.x+dx*p,my=fc.y+dy*p,ex=fc.x+dx*t,ey=fc.y+dy*t,nx=-dy/dist,ny=dx/dist;x.quadraticCurveTo(mx+nx*a*(i%2===0?1:-1),my+ny*a*(i%2===0?1:-1),ex,ey);}}else if(ls==="zigzag"){const segs=Math.max(6,Math.round(dist/20)),a=10,nx=-dy/dist,ny=dx/dist;x.moveTo(fc.x,fc.y);for(let i=1;i<=segs;i++){const t=i/segs,s=i%2===0?1:-1,px=fc.x+dx*t,py=fc.y+dy*t;if(i<segs)x.lineTo(px+nx*a*s,py+ny*a*s);else x.lineTo(px,py);}}else{x.moveTo(fc.x,fc.y);x.quadraticCurveTo((fc.x+tc.x)/2-dy*0.15,(fc.y+tc.y)/2+dx*0.15,tc.x,tc.y);}};
         // Glow line (skip for arrow types to avoid shadow on arrowhead)
-        const isArrow=ls==="arrowToFirst"||ls==="arrowToSecond";
-        if(!isArrow){ctx.save();ctx.globalAlpha=0.15;ctx.strokeStyle=color;ctx.lineWidth=6;ctx.beginPath();drawPath(ctx);ctx.stroke();ctx.restore();}
-        ctx.save();ctx.globalAlpha=0.8;ctx.strokeStyle=color;ctx.lineWidth=2.5;if(ls==="dashed")ctx.setLineDash([8,4]);
-        if(isArrow){const ar=getArrowPoints(fc,tc,ls==="arrowToSecond");if(ar){const fdx=tc.x-fc.x,fdy=tc.y-fc.y,qx=(fc.x+tc.x)/2-fdy*0.15,qy=(fc.y+tc.y)/2+fdx*0.15;ctx.beginPath();if(ls==="arrowToSecond"){ctx.moveTo(fc.x,fc.y);ctx.quadraticCurveTo(qx,qy,ar.endX,ar.endY);}else{ctx.moveTo(ar.endX,ar.endY);ctx.quadraticCurveTo(qx,qy,tc.x,tc.y);}ctx.stroke();ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(ar.tipX,ar.tipY);ctx.lineTo(ar.p1x,ar.p1y);ctx.lineTo(ar.p2x,ar.p2y);ctx.closePath();ctx.fill();}}else{ctx.beginPath();drawPath(ctx);ctx.stroke();}ctx.setLineDash([]);ctx.restore();
+        const isArrow=ls==="arrowToFirst"||ls==="arrowToSecond"||ls==="arrowBoth";
+        if(!isArrow){ctx.save();ctx.globalAlpha=isDark?0.05:0.15;ctx.strokeStyle=color;ctx.lineWidth=6;ctx.beginPath();drawPath(ctx);ctx.stroke();ctx.restore();}
+        ctx.save();ctx.globalAlpha=isDark?0.7:0.8;ctx.strokeStyle=color;ctx.lineWidth=2.5;if(ls==="dashed")ctx.setLineDash([8,4]);
+        if(isArrow){const fdx=tc.x-fc.x,fdy=tc.y-fc.y,qx=(fc.x+tc.x)/2-fdy*0.15,qy=(fc.y+tc.y)/2+fdx*0.15;
+          if(ls==="arrowBoth"){ctx.beginPath();drawPath(ctx);ctx.stroke();const ar1=getArrowPoints(fc,tc,true);if(ar1){ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(ar1.tipX,ar1.tipY);ctx.lineTo(ar1.p1x,ar1.p1y);ctx.lineTo(ar1.p2x,ar1.p2y);ctx.closePath();ctx.fill();}const ar2=getArrowPoints(fc,tc,false);if(ar2){ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(ar2.tipX,ar2.tipY);ctx.lineTo(ar2.p1x,ar2.p1y);ctx.lineTo(ar2.p2x,ar2.p2y);ctx.closePath();ctx.fill();}}
+          else{const ar=getArrowPoints(fc,tc,ls==="arrowToSecond");if(ar){ctx.beginPath();if(ls==="arrowToSecond"){ctx.moveTo(fc.x,fc.y);ctx.quadraticCurveTo(qx,qy,ar.endX,ar.endY);}else{ctx.moveTo(ar.endX,ar.endY);ctx.quadraticCurveTo(qx,qy,tc.x,tc.y);}ctx.stroke();ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(ar.tipX,ar.tipY);ctx.lineTo(ar.p1x,ar.p1y);ctx.lineTo(ar.p2x,ar.p2y);ctx.closePath();ctx.fill();}}}else{ctx.beginPath();drawPath(ctx);ctx.stroke();}ctx.setLineDash([]);ctx.restore();
         const mid=(ls==="wavy"||ls==="zigzag")?{x:(fc.x+tc.x)/2,y:(fc.y+tc.y)/2}:getMidOfCurve(fc.x,fc.y,tc.x,tc.y);const lb=(rel.type==="custom"&&!rel.label)?"":rel.label||(RELATIONSHIP_TYPES[rel.type]?.label||"기타");
         if(lb){const pw=Math.max(50,lb.length*14+16);
         ctx.save();ctx.fillStyle=T.pill;ctx.beginPath();ctx.roundRect(mid.x-pw/2,mid.y-13,pw,26,13);ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=1;ctx.stroke();ctx.restore();
@@ -168,6 +185,35 @@ export default function CharacterMap() {
   },[handleCanvasTouchStart,handleTouchMove,handleTouchUp]);
 
   const resetRelForm=()=>{setRelType("friend");setRelLabel("");setRelCustomColor(null);setRelLineStyle("solid");};
+
+  // Group functions
+  const openNewGroup=()=>{setGroupName("");setGroupColor("#6366F1");setGroupMembers([]);setShowGroupModal({editId:null});};
+  const openEditGroup=(g)=>{setGroupName(g.name||"");setGroupColor(g.color);setGroupMembers([...g.members]);setShowGroupModal({editId:g.id});};
+  const saveGroup=()=>{if(groupMembers.length<1)return;const d={name:groupName.trim(),color:groupColor,members:groupMembers};if(showGroupModal.editId){setGroups(p=>p.map(g=>g.id===showGroupModal.editId?{...g,...d}:g));}else{setGroups(p=>[...p,{id:generateId(),...d}]);}setShowGroupModal(null);};
+  const deleteGroup=(gid)=>{setConfirmModal({message:"이 그룹을 삭제할까요?",onConfirm:()=>{setGroups(p=>p.filter(g=>g.id!==gid));setConfirmModal(null);setShowGroupModal(null);}});};
+  const getGroupData=(g)=>{const pts=g.members.map(mid=>characters.find(c=>c.id===mid)).filter(Boolean);if(pts.length===0)return null;
+    const R=28;const circles=pts.map(c=>{const s=SIZE_LEVELS[c.sizeLevel??2];return{x:c.x,y:c.y,r:s.radius+R};});
+    // Add bridge circles between every pair of members (taper toward center)
+    const memberCount=circles.length;
+    for(let i=0;i<memberCount;i++)for(let j=i+1;j<memberCount;j++){
+      const a=circles[i],b=circles[j];const dx=b.x-a.x,dy=b.y-a.y,dist=Math.sqrt(dx*dx+dy*dy);
+      const br=Math.min(a.r,b.r)*0.55;const steps=Math.max(2,Math.ceil(dist/(br*0.8)));
+      for(let k=1;k<steps;k++){const t=k/steps;const mid=Math.abs(t-0.5)*2;const cr=br*(0.35+0.65*mid);circles.push({x:a.x+dx*t,y:a.y+dy*t,r:cr});}
+    }
+    // Second pass: fill gaps between all nearby circles (including bridges)
+    let prevLen=0;
+    for(let pass=0;pass<2&&circles.length!==prevLen;pass++){
+      prevLen=circles.length;const len=circles.length;
+      for(let i=0;i<len;i++)for(let j=i+1;j<len;j++){
+        const a=circles[i],b=circles[j];const dx=b.x-a.x,dy=b.y-a.y,dist=Math.sqrt(dx*dx+dy*dy);
+        const gap=dist-a.r-b.r;if(gap>0&&gap<Math.max(a.r,b.r)*1.5){
+          const fr=Math.min(a.r,b.r)*0.5;const steps=Math.max(1,Math.ceil(gap/(fr*0.7)));
+          for(let k=1;k<=steps;k++){const t=k/(steps+1);circles.push({x:a.x+dx*t,y:a.y+dy*t,r:fr*0.6});}
+        }
+      }
+    }
+    let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;circles.forEach(c=>{minX=Math.min(minX,c.x-c.r);minY=Math.min(minY,c.y-c.r);maxX=Math.max(maxX,c.x+c.r);maxY=Math.max(maxY,c.y+c.r);});
+    return{circles,minX:minX-20,minY:minY-20,maxX:maxX+20,maxY:maxY+20};};
   
   const addCharacter=()=>{if(!newName.trim())return;setCharacters(p=>[...p,{id:generateId(),name:newName.trim(),x:300+Math.random()*400,y:200+Math.random()*300,color:newColor,avatar:newAvatar,description:newDesc.trim(),sizeLevel:newSize}]);setNewName("");setNewDesc("");setNewColor(COLORS[Math.floor(Math.random()*COLORS.length)]);setNewAvatar(null);setNewSize(2);setShowAddModal(false);};
   const deleteCharacter=id=>{setCharacters(p=>p.filter(c=>c.id!==id));setRelations(p=>p.filter(r=>r.from!==id&&r.to!==id));setSelectedChar(null);setShowEditModal(null);};
@@ -188,7 +234,7 @@ export default function CharacterMap() {
 
   const AvatarUpload=({avatar,onUpload,onRemove})=>(<div style={{display:"flex",alignItems:"center",gap:"16px"}}><div style={{width:72,height:72,borderRadius:"50%",background:avatar?"none":T.input,border:`2px dashed ${T.inputBd}`,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",flexShrink:0}}>{avatar&&<img src={avatar} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>}</div><div style={{display:"flex",flexDirection:"column",gap:"6px"}}><button onClick={onUpload} style={{...btnS,padding:"8px 16px",fontSize:"12px"}}>📁 사진 {avatar?"변경":"선택"}</button>{avatar&&<button onClick={onRemove} style={{...btnS,padding:"6px 16px",fontSize:"11px",color:"#FF6B6B",borderColor:"rgba(255,80,80,0.2)"}}>✕ 제거</button>}</div></div>);
   const SizeSelector=({value,onChange})=>(<div style={{display:"flex",alignItems:"center",gap:"10px"}}>{[0,1,2,3,4].map(i=><button key={i} onClick={()=>onChange(i)} style={{width:16+i*8,height:16+i*8,borderRadius:"50%",background:value===i?"linear-gradient(135deg,#6366F1,#8B5CF6)":T.input,border:value===i?"2px solid #6366F1":`2px solid ${T.inputBd}`,cursor:"pointer"}}/>)}<span style={{fontSize:"11px",color:T.textMut,marginLeft:"4px"}}>{["아주 작게","작게","보통","크게","아주 크게"][value]}</span></div>);
-  const LineStyleOption=({styleKey,selected,onClick})=>{const sc=selected?"#A5B4FC":T.textMut;return(<button onClick={onClick} style={{padding:"10px 12px",borderRadius:"10px",border:`1px solid ${selected?"#6366F1":T.btnSecBd}`,background:selected?"rgba(99,102,241,0.1)":T.btnSec,cursor:"pointer",display:"flex",alignItems:"center",gap:"10px",fontFamily:"'Noto Sans KR',sans-serif",color:selected?"#A5B4FC":T.btnSecC,fontSize:"12px"}}><svg width="40" height="16" viewBox="0 0 40 16">{styleKey==="solid"&&<line x1="0" y1="8" x2="40" y2="8" stroke={sc} strokeWidth="2"/>}{styleKey==="dashed"&&<line x1="0" y1="8" x2="40" y2="8" stroke={sc} strokeWidth="2" strokeDasharray="4,3"/>}{styleKey==="arrowToFirst"&&<><line x1="8" y1="8" x2="40" y2="8" stroke={sc} strokeWidth="2"/><polygon points="0,8 10,3 10,13" fill={sc}/></>}{styleKey==="arrowToSecond"&&<><line x1="0" y1="8" x2="32" y2="8" stroke={sc} strokeWidth="2"/><polygon points="40,8 30,3 30,13" fill={sc}/></>}{styleKey==="wavy"&&<path d="M0,8 Q3,2 6,8 Q9,14 12,8 Q15,2 18,8 Q21,14 24,8 Q27,2 30,8 Q33,14 36,8 L40,8" fill="none" stroke={sc} strokeWidth="2"/>}{styleKey==="zigzag"&&<polyline points="0,8 5,2 10,14 15,2 20,14 25,2 30,14 35,2 40,8" fill="none" stroke={sc} strokeWidth="2"/>}</svg><span>{LINE_STYLES[styleKey].label}</span></button>);};
+  const LineStyleOption=({styleKey,selected,onClick})=>{const sc=selected?"#A5B4FC":T.textMut;return(<button onClick={onClick} style={{padding:"10px 12px",borderRadius:"10px",border:`1px solid ${selected?"#6366F1":T.btnSecBd}`,background:selected?"rgba(99,102,241,0.1)":T.btnSec,cursor:"pointer",display:"flex",alignItems:"center",gap:"10px",fontFamily:"'Noto Sans KR',sans-serif",color:selected?"#A5B4FC":T.btnSecC,fontSize:"12px"}}><svg width="40" height="16" viewBox="0 0 40 16">{styleKey==="solid"&&<line x1="0" y1="8" x2="40" y2="8" stroke={sc} strokeWidth="2"/>}{styleKey==="dashed"&&<line x1="0" y1="8" x2="40" y2="8" stroke={sc} strokeWidth="2" strokeDasharray="4,3"/>}{styleKey==="arrowToFirst"&&<><line x1="8" y1="8" x2="40" y2="8" stroke={sc} strokeWidth="2"/><polygon points="0,8 10,3 10,13" fill={sc}/></>}{styleKey==="arrowToSecond"&&<><line x1="0" y1="8" x2="32" y2="8" stroke={sc} strokeWidth="2"/><polygon points="40,8 30,3 30,13" fill={sc}/></>}{styleKey==="arrowBoth"&&<><line x1="8" y1="8" x2="32" y2="8" stroke={sc} strokeWidth="2"/><polygon points="0,8 10,3 10,13" fill={sc}/><polygon points="40,8 30,3 30,13" fill={sc}/></>}{styleKey==="wavy"&&<path d="M0,8 Q3,2 6,8 Q9,14 12,8 Q15,2 18,8 Q21,14 24,8 Q27,2 30,8 Q33,14 36,8 L40,8" fill="none" stroke={sc} strokeWidth="2"/>}{styleKey==="zigzag"&&<polyline points="0,8 5,2 10,14 15,2 20,14 25,2 30,14 35,2 40,8" fill="none" stroke={sc} strokeWidth="2"/>}</svg><span>{LINE_STYLES[styleKey].label}</span></button>);};
 
   const isTransparent = themeId === "transparent";
   const checkerBg = "repeating-conic-gradient(#d0d0d0 0% 25%, #f0f0f0 0% 50%) 0 0 / 20px 20px";
@@ -224,9 +270,16 @@ export default function CharacterMap() {
       </defs>
       <g transform={`translate(${pan.x},${pan.y}) scale(${zoom})`}>
         <rect width={canvasSize.width} height={canvasSize.height} fill="url(#grid)"/>
+        {groups.map(g=>{const gd=getGroupData(g);if(!gd)return null;const{circles}=gd;const gc=g.color;const fid=`gblob-${g.id}`;
+          return(<g key={g.id} onClick={e=>{e.stopPropagation();openEditGroup(g);}} style={{cursor:"pointer"}}>
+            <defs><filter id={fid} x="-20%" y="-20%" width="140%" height="140%" colorInterpolationFilters="sRGB"><feGaussianBlur in="SourceGraphic" stdDeviation="25" result="blur"/><feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 30 -10" result="sharp"/></filter></defs>
+            <g filter={`url(#${fid})`} opacity="0.18">{circles.map((c,i)=><circle key={i} cx={c.x} cy={c.y} r={c.r} fill={gc}/>)}</g>
+            {g.name&&<><rect x={gd.minX+2} y={gd.minY} width={g.name.length*14+16} height="22" rx="6" fill={gc} opacity="0.25"/><text x={gd.minX+10} y={gd.minY+16} fill={gc} fontSize="13" fontWeight="700" opacity="0.9">{g.name}</text></>}
+          </g>);})}
         {relations.map(rel=>{const fc=characters.find(c=>c.id===rel.from),tc=characters.find(c=>c.id===rel.to);if(!fc||!tc)return null;const color=getRelColor(rel),ls=rel.lineStyle||"solid",pathD=getRelPathD(rel,fc,tc),mid=getRelMid(rel,fc,tc),lb=(rel.type==="custom"&&!rel.label)?"":rel.label||(RELATIONSHIP_TYPES[rel.type]?.label||"기타"),pw=Math.max(50,lb.length*14+16);
-          let arrow=null,arrowPathD=pathD;if(ls==="arrowToFirst"||ls==="arrowToSecond"){arrow=getArrowPoints(fc,tc,ls==="arrowToSecond");if(arrow){const dx=tc.x-fc.x,dy=tc.y-fc.y,qx=(fc.x+tc.x)/2-dy*0.15,qy=(fc.y+tc.y)/2+dx*0.15;arrowPathD=ls==="arrowToSecond"?`M ${fc.x} ${fc.y} Q ${qx} ${qy} ${arrow.endX} ${arrow.endY}`:`M ${arrow.endX} ${arrow.endY} Q ${qx} ${qy} ${tc.x} ${tc.y}`;}}
-          return(<g key={rel.id}><path d={arrowPathD} fill="none" stroke={color} strokeWidth="6" opacity="0.15" filter="url(#glow)"/><path d={arrowPathD} fill="none" stroke={color} strokeWidth="2.5" strokeDasharray={ls==="dashed"?"8,4":"none"} opacity="0.8"/>{arrow&&<polygon points={`${arrow.tipX},${arrow.tipY} ${arrow.p1x},${arrow.p1y} ${arrow.p2x},${arrow.p2y}`} fill={color} opacity="0.8"/>}{lb&&<><rect x={mid.x-pw/2} y={mid.y-14} width={pw} height="28" rx="14" fill={T.pill} stroke={color} strokeWidth="1" opacity="0.9" style={{cursor:"pointer"}} onClick={e=>{e.stopPropagation();openEditRelation(rel);}}/><text x={mid.x} y={mid.y+4} textAnchor="middle" fill={color} fontSize="11" fontWeight="500" style={{pointerEvents:"none"}}>{lb}</text></>}{!lb&&<circle cx={mid.x} cy={mid.y} r="10" fill="transparent" style={{cursor:"pointer"}} onClick={e=>{e.stopPropagation();openEditRelation(rel);}}/>}</g>);})}
+          let arrow=null,arrow2=null,arrowPathD=pathD;if(ls==="arrowToFirst"||ls==="arrowToSecond"||ls==="arrowBoth"){arrow=getArrowPoints(fc,tc,ls==="arrowToSecond"||ls==="arrowBoth");if(ls==="arrowBoth"){arrow2=getArrowPoints(fc,tc,false);}if(arrow){const dx=tc.x-fc.x,dy=tc.y-fc.y,qx=(fc.x+tc.x)/2-dy*0.15,qy=(fc.y+tc.y)/2+dx*0.15;if(ls==="arrowToSecond")arrowPathD=`M ${fc.x} ${fc.y} Q ${qx} ${qy} ${arrow.endX} ${arrow.endY}`;else if(ls==="arrowToFirst")arrowPathD=`M ${arrow.endX} ${arrow.endY} Q ${qx} ${qy} ${tc.x} ${tc.y}`;else arrowPathD=pathD;}}
+          const rlGlow=isDark?"0.05":"0.15",rlLine=isDark?"0.7":"0.8",rlArrow=isDark?"0.7":"0.8";
+          return(<g key={rel.id}><path d={arrowPathD} fill="none" stroke={color} strokeWidth="6" opacity={rlGlow} filter="url(#glow)"/><path d={arrowPathD} fill="none" stroke="transparent" strokeWidth="16" style={{cursor:"pointer"}} onClick={e=>{e.stopPropagation();openEditRelation(rel);}}/><path d={arrowPathD} fill="none" stroke={color} strokeWidth="2.5" strokeDasharray={ls==="dashed"?"8,4":"none"} opacity={rlLine} style={{pointerEvents:"none"}}/>{arrow&&<polygon points={`${arrow.tipX},${arrow.tipY} ${arrow.p1x},${arrow.p1y} ${arrow.p2x},${arrow.p2y}`} fill={color} opacity={rlArrow}/>}{arrow2&&<polygon points={`${arrow2.tipX},${arrow2.tipY} ${arrow2.p1x},${arrow2.p1y} ${arrow2.p2x},${arrow2.p2y}`} fill={color} opacity={rlArrow}/>}{lb&&<><rect x={mid.x-pw/2} y={mid.y-14} width={pw} height="28" rx="14" fill={T.pill} stroke={color} strokeWidth="1" opacity="0.9" style={{cursor:"pointer"}} onClick={e=>{e.stopPropagation();openEditRelation(rel);}}/><text x={mid.x} y={mid.y+4} textAnchor="middle" fill={color} fontSize="11" fontWeight="500" style={{pointerEvents:"none"}}>{lb}</text></>}{!lb&&<circle cx={mid.x} cy={mid.y} r="10" fill="transparent" style={{cursor:"pointer"}} onClick={e=>{e.stopPropagation();openEditRelation(rel);}}/>}</g>);})}
         {characters.map(ch=>{const isSel=selectedChar===ch.id,isConn=connectingFrom===ch.id,s=SIZE_LEVELS[ch.sizeLevel??2];return(<g key={ch.id} onMouseDown={e=>handleMouseDown(e,ch.id)} onTouchStart={e=>handleTouchDown(e,ch.id)} onDoubleClick={e=>{e.stopPropagation();openEditModal(ch.id);}} style={{cursor:dragging===ch.id?"grabbing":"pointer"}}>{(isSel||isConn)&&<circle cx={ch.x} cy={ch.y} r={s.radius+12} fill="none" stroke={isConn?"#6366F1":ch.color} strokeWidth="2" strokeDasharray="4,4" opacity="0.6" style={{animation:"da 2s linear infinite"}}/>}<circle cx={ch.x} cy={ch.y+3} r={s.radius} fill="rgba(0,0,0,0.2)" filter="url(#shadow)"/>
           {ch.avatar?(<><defs><clipPath id={`ac-${ch.id}`}><circle cx={ch.x} cy={ch.y} r={s.radius}/></clipPath></defs><circle cx={ch.x} cy={ch.y} r={s.radius+2} fill="none" stroke={isSel?T.selStr:ch.color} strokeWidth={isSel?"3":"2.5"}/><image href={ch.avatar} x={ch.x-s.radius} y={ch.y-s.radius} width={s.radius*2} height={s.radius*2} clipPath={`url(#ac-${ch.id})`} preserveAspectRatio="xMidYMid slice" style={{pointerEvents:"none"}}/></>):(<><defs><radialGradient id={`g-${ch.id}`}><stop offset="0%" stopColor={ch.color} stopOpacity="0.9"/><stop offset="100%" stopColor={ch.color} stopOpacity="0.6"/></radialGradient></defs><circle cx={ch.x} cy={ch.y} r={s.radius} fill={`url(#g-${ch.id})`} stroke={isSel?T.selStr:T.nodeStr} strokeWidth={isSel?"3":"1.5"}/><text x={ch.x} y={ch.y} textAnchor="middle" dominantBaseline="central" fill="#fff" fontSize={s.fontSize} fontWeight="700" style={{pointerEvents:"none"}}>{ch.name.charAt(0)}</text></>)}
           <foreignObject x={ch.x-150} y={ch.y+s.radius+4} width="300" height="34" style={{pointerEvents:"none",overflow:"visible"}}><div xmlns="http://www.w3.org/1999/xhtml" style={{display:"flex",justifyContent:"center"}}><div style={{display:"inline-block",padding:"4px 14px",borderRadius:"13px",background:T.label,border:`1px solid ${T.labelBd}`,fontSize:`${s.labelFontSize}px`,fontWeight:"500",color:T.labelTxt,fontFamily:"'Noto Sans KR',sans-serif",whiteSpace:"nowrap",textAlign:"center"}}>{ch.name}</div></div></foreignObject>{ch.description&&<title>{ch.name}: {ch.description}</title>}</g>);})}
@@ -240,8 +293,9 @@ export default function CharacterMap() {
         <button onClick={()=>{exportToPng();setShowFab(false);}} disabled={isExporting} style={{...btnS,padding:"10px 18px",fontSize:"13px",display:"flex",alignItems:"center",gap:"8px",boxShadow:T.pShadow,borderRadius:"14px",background:"linear-gradient(135deg,rgba(34,197,94,0.15),rgba(34,197,94,0.05))",borderColor:"rgba(34,197,94,0.3)",color:"#22C55E"}}>{isExporting?"⏳":"📸"} PNG 저장</button>
         <button onClick={()=>{exportJson();setShowFab(false);}} style={{...btnS,padding:"10px 18px",fontSize:"13px",display:"flex",alignItems:"center",gap:"8px",boxShadow:T.pShadow,borderRadius:"14px"}}>💾 내보내기</button>
         <button onClick={()=>{jsonInputRef.current?.click();}} style={{...btnS,padding:"10px 18px",fontSize:"13px",display:"flex",alignItems:"center",gap:"8px",boxShadow:T.pShadow,borderRadius:"14px"}}>📂 불러오기</button>
-        <button onClick={()=>{setShowAddModal(true);setShowFab(false);}} style={{...btnP,padding:"10px 18px",fontSize:"13px",display:"flex",alignItems:"center",gap:"8px",boxShadow:"0 8px 24px rgba(99,102,241,0.3)",borderRadius:"14px"}}>+ 인물 추가</button>
         <button onClick={()=>{if(selectedChar){setConnectingFrom(selectedChar);setShowFab(false);}}} style={{...btnS,padding:"10px 18px",fontSize:"13px",display:"flex",alignItems:"center",gap:"8px",boxShadow:T.pShadow,borderRadius:"14px",opacity:selectedChar?1:0.4}}>🔗 관계 연결</button>
+        <button onClick={()=>{openNewGroup();setShowFab(false);}} style={{...btnS,padding:"10px 18px",fontSize:"13px",display:"flex",alignItems:"center",gap:"8px",boxShadow:T.pShadow,borderRadius:"14px"}}>📦 그룹 추가</button>
+        <button onClick={()=>{setShowAddModal(true);setShowFab(false);}} style={{...btnP,padding:"10px 18px",fontSize:"13px",display:"flex",alignItems:"center",gap:"8px",boxShadow:"0 8px 24px rgba(99,102,241,0.3)",borderRadius:"14px"}}>+ 인물 추가</button>
       </>}
       <button onClick={()=>setShowFab(p=>!p)} style={{width:"56px",height:"56px",borderRadius:"50%",background:"linear-gradient(135deg,#6366F1,#8B5CF6)",border:"none",color:"#fff",fontSize:"24px",cursor:"pointer",boxShadow:"0 8px 24px rgba(99,102,241,0.4)",display:"flex",alignItems:"center",justifyContent:"center",transition:"transform 0.2s",transform:showFab?"rotate(45deg)":"rotate(0deg)"}}>+</button>
     </div>
@@ -339,6 +393,25 @@ export default function CharacterMap() {
       </div>
       <div style={{display:"flex",justifyContent:"flex-end",marginTop:"24px"}}>
         <button onClick={()=>setShowInfo(false)} style={btnP}>확인</button>
+      </div>
+    </div></div>}
+
+    {/* Group Modal */}
+    {showGroupModal&&<div style={modalStyle} onClick={()=>setShowGroupModal(null)}><div style={{...cardStyle,width:"420px",maxHeight:"85vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+      <h3 style={{margin:"0 0 20px",color:T.text,fontSize:"18px",fontWeight:"600"}}>{showGroupModal.editId?"📦 그룹 편집":"📦 새 그룹"}</h3>
+      <div style={{display:"flex",flexDirection:"column",gap:"16px"}}>
+        <div><label style={{fontSize:"12px",color:T.textSec,marginBottom:"6px",display:"block"}}>그룹 이름 (선택)</label><input value={groupName} onChange={e=>setGroupName(e.target.value)} placeholder="예: 1반, 길드, 왕족..." style={inputStyle}/></div>
+        <div><label style={{fontSize:"12px",color:T.textSec,marginBottom:"8px",display:"block"}}>색상</label><div style={{display:"flex",gap:"8px",flexWrap:"wrap"}}>{COLORS.map(c=><div key={c} onClick={()=>setGroupColor(c)} style={{width:"28px",height:"28px",borderRadius:"50%",background:c,cursor:"pointer",border:groupColor===c?"3px solid #6366F1":"3px solid transparent"}}/>)}</div></div>
+        <div><label style={{fontSize:"12px",color:T.textSec,marginBottom:"8px",display:"block"}}>멤버 선택</label><div style={{display:"flex",flexDirection:"column",gap:"6px",maxHeight:"200px",overflowY:"auto"}}>{characters.map(ch=>{const isMember=groupMembers.includes(ch.id);return(<div key={ch.id} onClick={()=>setGroupMembers(p=>isMember?p.filter(m=>m!==ch.id):[...p,ch.id])} style={{display:"flex",alignItems:"center",gap:"10px",padding:"8px 12px",borderRadius:"10px",cursor:"pointer",border:`1px solid ${isMember?"#6366F1":T.btnSecBd}`,background:isMember?"rgba(99,102,241,0.1)":T.btnSec}}>
+          <div style={{width:"24px",height:"24px",borderRadius:"50%",background:`linear-gradient(135deg,${ch.color},${ch.color}88)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px",fontWeight:"700",color:"#fff",overflow:"hidden",flexShrink:0}}>{ch.avatar?<img src={ch.avatar} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:ch.name.charAt(0)}</div>
+          <span style={{fontSize:"13px",color:T.text,flex:1}}>{ch.name}</span>
+          <span style={{fontSize:"18px"}}>{isMember?"✓":""}</span>
+        </div>);})}</div></div>
+        <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",marginTop:"8px"}}>
+          {showGroupModal.editId&&<button onClick={()=>deleteGroup(showGroupModal.editId)} style={{...btnS,color:"#FF6B6B",borderColor:"rgba(255,80,80,0.3)",marginRight:"auto"}}>삭제</button>}
+          <button onClick={()=>setShowGroupModal(null)} style={btnS}>취소</button>
+          <button onClick={saveGroup} style={{...btnP,opacity:groupMembers.length>0?1:0.5}}>저장</button>
+        </div>
       </div>
     </div></div>}
 
