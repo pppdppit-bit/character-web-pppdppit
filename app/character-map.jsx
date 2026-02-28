@@ -200,18 +200,6 @@ export default function CharacterMap() {
       const br=Math.min(a.r,b.r)*0.55;const steps=Math.max(2,Math.ceil(dist/(br*0.8)));
       for(let k=1;k<steps;k++){const t=k/steps;const mid=Math.abs(t-0.5)*2;const cr=br*(0.35+0.65*mid);circles.push({x:a.x+dx*t,y:a.y+dy*t,r:cr});}
     }
-    // Second pass: fill gaps between all nearby circles (including bridges)
-    let prevLen=0;
-    for(let pass=0;pass<2&&circles.length!==prevLen;pass++){
-      prevLen=circles.length;const len=circles.length;
-      for(let i=0;i<len;i++)for(let j=i+1;j<len;j++){
-        const a=circles[i],b=circles[j];const dx=b.x-a.x,dy=b.y-a.y,dist=Math.sqrt(dx*dx+dy*dy);
-        const gap=dist-a.r-b.r;if(gap>0&&gap<Math.max(a.r,b.r)*1.5){
-          const fr=Math.min(a.r,b.r)*0.5;const steps=Math.max(1,Math.ceil(gap/(fr*0.7)));
-          for(let k=1;k<=steps;k++){const t=k/(steps+1);circles.push({x:a.x+dx*t,y:a.y+dy*t,r:fr*0.6});}
-        }
-      }
-    }
     let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;circles.forEach(c=>{minX=Math.min(minX,c.x-c.r);minY=Math.min(minY,c.y-c.r);maxX=Math.max(maxX,c.x+c.r);maxY=Math.max(maxY,c.y+c.r);});
     return{circles,minX:minX-20,minY:minY-20,maxX:maxX+20,maxY:maxY+20};};
   
