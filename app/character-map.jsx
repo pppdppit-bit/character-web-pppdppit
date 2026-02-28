@@ -12,7 +12,7 @@ const BG_THEMES = [
   { id: "transparent", label: "투명", bg: ["transparent","transparent","transparent"], grid: "rgba(0,0,0,0.06)", text: "#333", textSec: "#666", textMut: "#999", card: ["#FFFFFF","#F5F7FA"], panel: ["rgba(255,255,255,0.97)","rgba(245,247,250,0.97)"], input: "rgba(0,0,0,0.04)", inputBd: "rgba(0,0,0,0.12)", btnSec: "rgba(0,0,0,0.04)", btnSecBd: "rgba(0,0,0,0.12)", btnSecC: "#555", label: "rgba(255,255,255,0.92)", labelBd: "rgba(0,0,0,0.08)", labelTxt: "#333", pill: "rgba(255,255,255,0.92)", nodeStr: "rgba(0,0,0,0.1)", selStr: "#333", help: "rgba(255,255,255,0.8)", helpBd: "rgba(0,0,0,0.06)", overlay: "rgba(255,255,255,0.6)", cardBd: "rgba(0,0,0,0.08)", shadow: "0 25px 60px rgba(0,0,0,0.12)", pShadow: "0 15px 40px rgba(0,0,0,0.08)", wm: "rgba(0,0,0,0.1)", swatch: "transparent" },
 ];
 
-const RELATIONSHIP_TYPES = { family:{label:"가족",color:"#E68200"}, lover:{label:"연인",color:"#EB7292"}, friend:{label:"친구",color:"#2DB78B"}, rival:{label:"라이벌",color:"#734AB2"}, enemy:{label:"적",color:"#EF4444"}, mentor:{label:"스승/제자",color:"#1359BE"}, colleague:{label:"동료",color:"#00BDE4"}, custom:{label:"기타",color:"#AAAAAA"} };
+const RELATIONSHIP_TYPES = { family:{label:"가족",color:"#E68200"}, lover:{label:"연인",color:"#F314CF"}, friend:{label:"친구",color:"#2DB78B"}, rival:{label:"라이벌",color:"#734AB2"}, enemy:{label:"적",color:"#EF4444"}, mentor:{label:"스승/제자",color:"#1359BE"}, colleague:{label:"동료",color:"#00BDE4"}, custom:{label:"기타",color:"#AAAAAA"} };
 const REL_COLORS_BASE = ["#AAAAAA","#EF4444","#F1571B","#E68200","#F8E57D","#88D54E","#1E8701","#2DB78B","#00BDE4","#1359BE","#333175","#734AB2","#B575E9","#F314CF","#EB7292","#8F5438","#628059","#55777D"];
 const LINE_STYLES = { solid:{label:"실선"}, dashed:{label:"점선"}, arrowToFirst:{label:"→ 첫번째"}, arrowToSecond:{label:"→ 두번째"}, arrowBoth:{label:"↔ 양방향"}, wavy:{label:"구불구불"}, zigzag:{label:"지그재그"} };
 const SIZE_LEVELS = [{radius:24,fontSize:14,labelWidth:70,labelFontSize:10},{radius:32,fontSize:18,labelWidth:85,labelFontSize:11},{radius:40,fontSize:22,labelWidth:100,labelFontSize:12},{radius:52,fontSize:28,labelWidth:115,labelFontSize:13},{radius:66,fontSize:34,labelWidth:135,labelFontSize:14}];
@@ -62,13 +62,20 @@ export default function CharacterMap() {
   const getRelMid=(r,f,t)=>{const ls=r.lineStyle||"solid";if(ls==="wavy"||ls==="zigzag")return{x:(f.x+t.x)/2,y:(f.y+t.y)/2};return getMidOfCurve(f.x,f.y,t.x,t.y);};
 
   const getArrowPoints=(fc,tc,targetIsTo)=>{
-    const tgt=targetIsTo?tc:fc;const src=targetIsTo?fc:tc;const s=SIZE_LEVELS[tgt.sizeLevel??2];
-    const dx=tgt.x-src.x,dy=tgt.y-src.y,d=Math.sqrt(dx*dx+dy*dy);if(d===0)return null;
-    const nx=dx/d,ny=dy/d;
-    const tipX=tgt.x-nx*(s.radius+2),tipY=tgt.y-ny*(s.radius+2);
-    const bx=tipX-nx*16,by=tipY-ny*16;
+    const tgt=targetIsTo?tc:fc;const s=SIZE_LEVELS[tgt.sizeLevel??2];
+    const dx=tc.x-fc.x,dy=tc.y-fc.y;
+    const qx=(fc.x+tc.x)/2-dy*0.15,qy=(fc.y+tc.y)/2+dx*0.15;
+    // Sample two points near the endpoint on the bezier to get precise tangent
+    const t1=targetIsTo?0.935:0.065,t0=targetIsTo?0.89:0.11;
+    const bx=(t)=>(1-t)*(1-t)*fc.x+2*(1-t)*t*qx+t*t*tc.x;
+    const by=(t)=>(1-t)*(1-t)*fc.y+2*(1-t)*t*qy+t*t*tc.y;
+    const tx=bx(t1)-bx(t0),ty=by(t1)-by(t0);
+    const d=Math.sqrt(tx*tx+ty*ty);if(d===0)return null;
+    const nx=tx/d,ny=ty/d;
+    const tipX=tgt.x-nx*(s.radius+1),tipY=tgt.y-ny*(s.radius+1);
+    const baseX=tipX-nx*14,baseY=tipY-ny*14;
     const px=-ny,py=nx;
-    return{tipX,tipY,p1x:bx+px*7,p1y:by+py*7,p2x:bx-px*7,p2y:by-py*7,endX:tipX-nx*10,endY:tipY-ny*10};
+    return{tipX,tipY,p1x:baseX+px*6,p1y:baseY+py*6,p2x:baseX-px*6,p2y:baseY-py*6};
   };
 
   // PNG Export
@@ -104,13 +111,15 @@ export default function CharacterMap() {
       // Relations (NO shadow/glow on arrows)
       relations.forEach(rel=>{const fc=characters.find(c=>c.id===rel.from),tc=characters.find(c=>c.id===rel.to);if(!fc||!tc)return;const color=getRelColor(rel),ls=rel.lineStyle||"solid";
         const drawPath=x=>{const dx=tc.x-fc.x,dy=tc.y-fc.y,dist=Math.sqrt(dx*dx+dy*dy);if(ls==="wavy"){const w=Math.max(6,Math.round(dist/22)),a=10;x.moveTo(fc.x,fc.y);for(let i=1;i<=w;i++){const t=i/w,p=(i-0.5)/w,mx=fc.x+dx*p,my=fc.y+dy*p,ex=fc.x+dx*t,ey=fc.y+dy*t,nx=-dy/dist,ny=dx/dist;x.quadraticCurveTo(mx+nx*a*(i%2===0?1:-1),my+ny*a*(i%2===0?1:-1),ex,ey);}}else if(ls==="zigzag"){const segs=Math.max(6,Math.round(dist/20)),a=10,nx=-dy/dist,ny=dx/dist;x.moveTo(fc.x,fc.y);for(let i=1;i<=segs;i++){const t=i/segs,s=i%2===0?1:-1,px=fc.x+dx*t,py=fc.y+dy*t;if(i<segs)x.lineTo(px+nx*a*s,py+ny*a*s);else x.lineTo(px,py);}}else{x.moveTo(fc.x,fc.y);x.quadraticCurveTo((fc.x+tc.x)/2-dy*0.15,(fc.y+tc.y)/2+dx*0.15,tc.x,tc.y);}};
-        // Glow line (skip for arrow types to avoid shadow on arrowhead)
-        const isArrow=ls==="arrowToFirst"||ls==="arrowToSecond"||ls==="arrowBoth";
-        if(!isArrow){ctx.save();ctx.globalAlpha=isDark?0.11:0.11;ctx.strokeStyle=color;ctx.lineWidth=6;ctx.beginPath();drawPath(ctx);ctx.stroke();ctx.restore();}
+        // Glow line
+        ctx.save();ctx.globalAlpha=isDark?0.11:0.11;ctx.strokeStyle=color;ctx.lineWidth=6;ctx.beginPath();drawPath(ctx);ctx.stroke();ctx.restore();
         ctx.save();ctx.globalAlpha=isDark?0.53:0.63;ctx.strokeStyle=color;ctx.lineWidth=2.5;if(ls==="dashed")ctx.setLineDash([8,4]);
-        if(isArrow){const fdx=tc.x-fc.x,fdy=tc.y-fc.y,qx=(fc.x+tc.x)/2-fdy*0.15,qy=(fc.y+tc.y)/2+fdx*0.15;
-          if(ls==="arrowBoth"){ctx.beginPath();drawPath(ctx);ctx.stroke();const ar1=getArrowPoints(fc,tc,true);if(ar1){ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(ar1.tipX,ar1.tipY);ctx.lineTo(ar1.p1x,ar1.p1y);ctx.lineTo(ar1.p2x,ar1.p2y);ctx.closePath();ctx.fill();}const ar2=getArrowPoints(fc,tc,false);if(ar2){ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(ar2.tipX,ar2.tipY);ctx.lineTo(ar2.p1x,ar2.p1y);ctx.lineTo(ar2.p2x,ar2.p2y);ctx.closePath();ctx.fill();}}
-          else{const ar=getArrowPoints(fc,tc,ls==="arrowToSecond");if(ar){ctx.beginPath();if(ls==="arrowToSecond"){ctx.moveTo(fc.x,fc.y);ctx.quadraticCurveTo(qx,qy,ar.endX,ar.endY);}else{ctx.moveTo(ar.endX,ar.endY);ctx.quadraticCurveTo(qx,qy,tc.x,tc.y);}ctx.stroke();ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(ar.tipX,ar.tipY);ctx.lineTo(ar.p1x,ar.p1y);ctx.lineTo(ar.p2x,ar.p2y);ctx.closePath();ctx.fill();}}}else{ctx.beginPath();drawPath(ctx);ctx.stroke();}ctx.setLineDash([]);ctx.restore();
+        ctx.beginPath();drawPath(ctx);ctx.stroke();ctx.setLineDash([]);ctx.restore();
+        const isArrow=ls==="arrowToFirst"||ls==="arrowToSecond"||ls==="arrowBoth";
+        if(isArrow){const drawTri=(ar)=>{if(!ar)return;ctx.save();ctx.globalAlpha=isDark?0.53:0.63;ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(ar.tipX,ar.tipY);ctx.lineTo(ar.p1x,ar.p1y);ctx.lineTo(ar.p2x,ar.p2y);ctx.closePath();ctx.fill();ctx.restore();};
+          if(ls==="arrowBoth"){drawTri(getArrowPoints(fc,tc,true));drawTri(getArrowPoints(fc,tc,false));}
+          else if(ls==="arrowToSecond")drawTri(getArrowPoints(fc,tc,true));
+          else drawTri(getArrowPoints(fc,tc,false));}
         const mid=(ls==="wavy"||ls==="zigzag")?{x:(fc.x+tc.x)/2,y:(fc.y+tc.y)/2}:getMidOfCurve(fc.x,fc.y,tc.x,tc.y);const lb=(rel.type==="custom"&&!rel.label)?"":rel.label||(RELATIONSHIP_TYPES[rel.type]?.label||"기타");
         if(lb){const pw=Math.max(50,lb.length*14+16);
         ctx.save();ctx.fillStyle=T.pill;ctx.beginPath();ctx.roundRect(mid.x-pw/2,mid.y-13,pw,26,13);ctx.fill();ctx.strokeStyle=color;ctx.lineWidth=1;ctx.stroke();ctx.restore();
@@ -265,9 +274,9 @@ export default function CharacterMap() {
             {g.name&&<><rect x={gd.minX+2} y={gd.minY} width={g.name.length*14+16} height="22" rx="6" fill={gc} opacity="0.25"/><text x={gd.minX+10} y={gd.minY+16} fill={gc} fontSize="13" fontWeight="700" opacity="0.9">{g.name}</text></>}
           </g>);})}
         {relations.map(rel=>{const fc=characters.find(c=>c.id===rel.from),tc=characters.find(c=>c.id===rel.to);if(!fc||!tc)return null;const color=getRelColor(rel),ls=rel.lineStyle||"solid",pathD=getRelPathD(rel,fc,tc),mid=getRelMid(rel,fc,tc),lb=(rel.type==="custom"&&!rel.label)?"":rel.label||(RELATIONSHIP_TYPES[rel.type]?.label||"기타"),pw=Math.max(50,lb.length*14+16);
-          let arrow=null,arrow2=null,arrowPathD=pathD;if(ls==="arrowToFirst"||ls==="arrowToSecond"||ls==="arrowBoth"){arrow=getArrowPoints(fc,tc,ls==="arrowToSecond"||ls==="arrowBoth");if(ls==="arrowBoth"){arrow2=getArrowPoints(fc,tc,false);}if(arrow){const dx=tc.x-fc.x,dy=tc.y-fc.y,qx=(fc.x+tc.x)/2-dy*0.15,qy=(fc.y+tc.y)/2+dx*0.15;if(ls==="arrowToSecond")arrowPathD=`M ${fc.x} ${fc.y} Q ${qx} ${qy} ${arrow.endX} ${arrow.endY}`;else if(ls==="arrowToFirst")arrowPathD=`M ${arrow.endX} ${arrow.endY} Q ${qx} ${qy} ${tc.x} ${tc.y}`;else arrowPathD=pathD;}}
+          let arrow=null,arrow2=null;if(ls==="arrowToFirst"||ls==="arrowToSecond"||ls==="arrowBoth"){arrow=getArrowPoints(fc,tc,ls==="arrowToSecond"||ls==="arrowBoth");if(ls==="arrowBoth")arrow2=getArrowPoints(fc,tc,false);if(ls==="arrowToFirst")arrow=getArrowPoints(fc,tc,false);}
           const rlGlow=isDark?"0.11":"0.11",rlLine=isDark?"0.53":"0.63",rlArrow=isDark?"0.53":"0.63";
-          return(<g key={rel.id}><path d={arrowPathD} fill="none" stroke={color} strokeWidth="6" opacity={rlGlow} filter="url(#glow)"/><path d={arrowPathD} fill="none" stroke="transparent" strokeWidth="16" style={{cursor:"pointer"}} onClick={e=>{e.stopPropagation();openEditRelation(rel);}}/><path d={arrowPathD} fill="none" stroke={color} strokeWidth="2.5" strokeDasharray={ls==="dashed"?"8,4":"none"} opacity={rlLine} style={{pointerEvents:"none"}}/>{arrow&&<polygon points={`${arrow.tipX},${arrow.tipY} ${arrow.p1x},${arrow.p1y} ${arrow.p2x},${arrow.p2y}`} fill={color} opacity={rlArrow}/>}{arrow2&&<polygon points={`${arrow2.tipX},${arrow2.tipY} ${arrow2.p1x},${arrow2.p1y} ${arrow2.p2x},${arrow2.p2y}`} fill={color} opacity={rlArrow}/>}{lb&&<><rect x={mid.x-pw/2} y={mid.y-14} width={pw} height="28" rx="14" fill={T.pill} stroke={color} strokeWidth="1" opacity="0.73" style={{cursor:"pointer"}} onClick={e=>{e.stopPropagation();openEditRelation(rel);}}/><text x={mid.x} y={mid.y+4} textAnchor="middle" fill={color} fontSize="11" fontWeight="500" style={{pointerEvents:"none"}}>{lb}</text></>}{!lb&&<circle cx={mid.x} cy={mid.y} r="10" fill="transparent" style={{cursor:"pointer"}} onClick={e=>{e.stopPropagation();openEditRelation(rel);}}/>}</g>);})}
+          return(<g key={rel.id}><path d={pathD} fill="none" stroke={color} strokeWidth="6" opacity={rlGlow} filter="url(#glow)"/><path d={pathD} fill="none" stroke="transparent" strokeWidth="16" style={{cursor:"pointer"}} onClick={e=>{e.stopPropagation();openEditRelation(rel);}}/><path d={pathD} fill="none" stroke={color} strokeWidth="2.5" strokeDasharray={ls==="dashed"?"8,4":"none"} opacity={rlLine} style={{pointerEvents:"none"}}/>{arrow&&<polygon points={`${arrow.tipX},${arrow.tipY} ${arrow.p1x},${arrow.p1y} ${arrow.p2x},${arrow.p2y}`} fill={color} opacity={rlArrow}/>}{arrow2&&<polygon points={`${arrow2.tipX},${arrow2.tipY} ${arrow2.p1x},${arrow2.p1y} ${arrow2.p2x},${arrow2.p2y}`} fill={color} opacity={rlArrow}/>}{lb&&<><rect x={mid.x-pw/2} y={mid.y-14} width={pw} height="28" rx="14" fill={T.pill} stroke={color} strokeWidth="1" opacity="0.73" style={{cursor:"pointer"}} onClick={e=>{e.stopPropagation();openEditRelation(rel);}}/><text x={mid.x} y={mid.y+4} textAnchor="middle" fill={color} fontSize="11" fontWeight="500" style={{pointerEvents:"none"}}>{lb}</text></>}{!lb&&<circle cx={mid.x} cy={mid.y} r="10" fill="transparent" style={{cursor:"pointer"}} onClick={e=>{e.stopPropagation();openEditRelation(rel);}}/>}</g>);})}
         {characters.map(ch=>{const isSel=selectedChar===ch.id,isConn=connectingFrom===ch.id,s=SIZE_LEVELS[ch.sizeLevel??2];return(<g key={ch.id} onMouseDown={e=>handleMouseDown(e,ch.id)} onTouchStart={e=>handleTouchDown(e,ch.id)} onDoubleClick={e=>{e.stopPropagation();openEditModal(ch.id);}} style={{cursor:dragging===ch.id?"grabbing":"pointer"}}>{(isSel||isConn)&&<circle cx={ch.x} cy={ch.y} r={s.radius+12} fill="none" stroke={isConn?"#6366F1":ch.color} strokeWidth="2" strokeDasharray="4,4" opacity="0.6" style={{animation:"da 2s linear infinite"}}/>}<circle cx={ch.x} cy={ch.y+3} r={s.radius} fill="rgba(0,0,0,0.2)" filter="url(#shadow)"/>
           {ch.avatar?(<><defs><clipPath id={`ac-${ch.id}`}><circle cx={ch.x} cy={ch.y} r={s.radius}/></clipPath></defs><circle cx={ch.x} cy={ch.y} r={s.radius+2} fill="none" stroke={isSel?T.selStr:ch.color} strokeWidth={isSel?"3":"2.5"}/><image href={ch.avatar} x={ch.x-s.radius} y={ch.y-s.radius} width={s.radius*2} height={s.radius*2} clipPath={`url(#ac-${ch.id})`} preserveAspectRatio="xMidYMid slice" style={{pointerEvents:"none"}}/></>):(<><defs><radialGradient id={`g-${ch.id}`}><stop offset="0%" stopColor={ch.color} stopOpacity="0.9"/><stop offset="100%" stopColor={ch.color} stopOpacity="0.6"/></radialGradient></defs><circle cx={ch.x} cy={ch.y} r={s.radius} fill={`url(#g-${ch.id})`} stroke={isSel?T.selStr:T.nodeStr} strokeWidth={isSel?"3":"1.5"}/><text x={ch.x} y={ch.y} textAnchor="middle" dominantBaseline="central" fill="#fff" fontSize={s.fontSize} fontWeight="700" style={{pointerEvents:"none"}}>{ch.name.charAt(0)}</text></>)}
           <foreignObject x={ch.x-150} y={ch.y+s.radius+4} width="300" height="34" style={{pointerEvents:"none",overflow:"visible"}}><div xmlns="http://www.w3.org/1999/xhtml" style={{display:"flex",justifyContent:"center"}}><div style={{display:"inline-block",padding:"4px 14px",borderRadius:"13px",background:T.label,border:`1px solid ${T.labelBd}`,fontSize:`${s.labelFontSize}px`,fontWeight:"500",color:T.labelTxt,fontFamily:"'Noto Sans KR',sans-serif",whiteSpace:"nowrap",textAlign:"center"}}>{ch.name}</div></div></foreignObject>{ch.description&&<title>{ch.name}: {ch.description}</title>}</g>);})}
