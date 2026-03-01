@@ -34,8 +34,7 @@ export default function CharacterMap() {
   const adjustForBg=(hex)=>{if(isDark||!hex||hex==="BW")return hex;const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);const lum=(0.299*r+0.587*g+0.114*b)/255;if(lum<0.55)return hex;const f=0.45/lum;return `#${Math.round(r*f).toString(16).padStart(2,"0")}${Math.round(g*f).toString(16).padStart(2,"0")}${Math.round(b*f).toString(16).padStart(2,"0")}`;};
   const resolveColor = c => {const v = c === "BW" ? BW_COLOR : c; return adjustForBg(v);};
   const [characters,setCharacters]=useState(DEFAULT_CHARACTERS);const [relations,setRelations]=useState(DEFAULT_RELATIONS);
-  const [groups,setGroups]=useState([]);const [showGroupModal,setShowGroupModal]=useState(null);const [groupName,setGroupName]=useState("");const [groupColor,setGroupColor]=useState("#6366F1");const [groupMembers,setGroupMembers]=useState([]);
-  const [dragging,setDragging]=useState(null);const [dragOffset,setDragOffset]=useState({x:0,y:0});
+    const [dragging,setDragging]=useState(null);const [dragOffset,setDragOffset]=useState({x:0,y:0});
   const [selectedChar,setSelectedChar]=useState(null);const [connectingFrom,setConnectingFrom]=useState(null);
   const [showAddModal,setShowAddModal]=useState(false);const [showRelModal,setShowRelModal]=useState(null);const [showEditModal,setShowEditModal]=useState(null);
   const [showThemePanel,setShowThemePanel]=useState(false);const [showFab,setShowFab]=useState(false);
@@ -49,8 +48,8 @@ export default function CharacterMap() {
   const [canvasSize]=useState({width:2000,height:1500});
 
   // JSON Export/Import (zero traffic - pure client-side)
-  const exportJson=()=>{const data={projectTitle,projectLogo,themeId,characters,relations,groups};const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`${projectTitle||"character-map"}-${new Date().toISOString().slice(0,10)}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);};
-  const importJson=(file)=>{if(!file)return;const reader=new FileReader();reader.onload=e=>{try{const data=JSON.parse(e.target.result);if(data.characters)setCharacters(data.characters);if(data.relations)setRelations(data.relations);if(data.groups)setGroups(data.groups);if(data.projectTitle!==undefined)setProjectTitle(data.projectTitle);if(data.projectLogo!==undefined)setProjectLogo(data.projectLogo);if(data.themeId)setThemeId(data.themeId);setSelectedChar(null);}catch(err){alert("파일을 읽을 수 없습니다.");}};reader.readAsText(file);};
+  const exportJson=()=>{const data={projectTitle,projectLogo,themeId,characters,relations};const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`${projectTitle||"character-map"}-${new Date().toISOString().slice(0,10)}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);};
+  const importJson=(file)=>{if(!file)return;const reader=new FileReader();reader.onload=e=>{try{const data=JSON.parse(e.target.result);if(data.characters)setCharacters(data.characters);if(data.relations)setRelations(data.relations);if(data.projectTitle!==undefined)setProjectTitle(data.projectTitle);if(data.projectLogo!==undefined)setProjectLogo(data.projectLogo);if(data.themeId)setThemeId(data.themeId);setSelectedChar(null);}catch(err){alert("파일을 읽을 수 없습니다.");}};reader.readAsText(file);};
   const [newName,setNewName]=useState("");const [newDesc,setNewDesc]=useState("");const [newColor,setNewColor]=useState(COLORS[0]);const [newAvatar,setNewAvatar]=useState(null);const [newSize,setNewSize]=useState(2);
   const [editName,setEditName]=useState("");const [editDesc,setEditDesc]=useState("");const [editColor,setEditColor]=useState("");const [editAvatar,setEditAvatar]=useState(null);const [editSize,setEditSize]=useState(2);
   const [relType,setRelType]=useState("friend");const [relLabel,setRelLabel]=useState("");const [relCustomColor,setRelCustomColor]=useState(null);const [relLineStyle,setRelLineStyle]=useState("solid");
@@ -92,26 +91,14 @@ export default function CharacterMap() {
       if(!isTransparent){const bgGrad=ctx.createLinearGradient(minX,minY,maxX,maxY);bgGrad.addColorStop(0,T.bg[0]);bgGrad.addColorStop(0.5,T.bg[1]);bgGrad.addColorStop(1,T.bg[2]);ctx.fillStyle=bgGrad;ctx.fillRect(minX,minY,width,height);}
       if(!isTransparent){ctx.fillStyle=T.grid;for(let gx=Math.floor(minX/40)*40;gx<maxX;gx+=40)for(let gy=Math.floor(minY/40)*40;gy<maxY;gy+=40){ctx.beginPath();ctx.arc(gx+20,gy+20,0.8,0,Math.PI*2);ctx.fill();}}
 
-      // Title (bigger: 32px)
+      // Title
       if(hasTitle){const cx=(minX+maxX)/2,ty=minY+65;
         if(projectLogo){await new Promise(resolve=>{const li=new Image();li.crossOrigin="anonymous";li.onload=()=>{const lh=96,lw=(li.naturalWidth/li.naturalHeight)*lh;ctx.save();ctx.font="900 36px 'Noto Sans KR',sans-serif";const tw=projectTitle?ctx.measureText(projectTitle).width:0;const totalW=lw+(projectTitle?8+tw:0);const sx=cx-totalW/2;ctx.drawImage(li,sx,ty-lh/2,lw,lh);if(projectTitle){ctx.fillStyle=T.labelTxt;ctx.textAlign="left";ctx.textBaseline="middle";ctx.fillText(projectTitle,sx+lw+8,ty);}ctx.restore();resolve();};li.onerror=()=>{if(projectTitle){ctx.save();ctx.fillStyle=T.labelTxt;ctx.font="900 36px 'Noto Sans KR',sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(projectTitle,cx,ty);ctx.restore();}resolve();};li.src=projectLogo;});}
         else if(projectTitle){ctx.save();ctx.fillStyle=T.labelTxt;ctx.font="900 36px 'Noto Sans KR',sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(projectTitle,cx,ty);ctx.restore();}}
 
-      // Groups (metaball via offscreen canvas)
-      for(const g of groups){const gd=getGroupData(g);if(!gd)continue;const{circles}=gd;const gc=g.color;
-        const oc=document.createElement("canvas");oc.width=width;oc.height=height;const ox=oc.getContext("2d");
-        ox.fillStyle="#fff";circles.forEach(c=>{ox.beginPath();ox.arc(c.x-minX,c.y-minY,c.r,0,Math.PI*2);ox.fill();});
-        ox.filter="blur(25px)";ox.drawImage(oc,0,0);ox.filter="none";
-        const id=ox.getImageData(0,0,width,height);const px=id.data;
-        const hr=parseInt(gc.slice(1,3),16),hg=parseInt(gc.slice(3,5),16),hb=parseInt(gc.slice(5,7),16);
-        for(let i=0;i<px.length;i+=4){const a=px[i]>100?45:0;px[i]=hr;px[i+1]=hg;px[i+2]=hb;px[i+3]=a;}
-        ox.putImageData(id,0,0);ctx.drawImage(oc,minX,minY);
-        if(g.name){const gdd=getGroupData(g);if(gdd){ctx.save();ctx.globalAlpha=0.25;ctx.fillStyle=gc;const tw=g.name.length*14+16;ctx.beginPath();ctx.roundRect(gdd.minX+2,gdd.minY,tw,22,6);ctx.fill();ctx.restore();ctx.save();ctx.globalAlpha=0.9;ctx.fillStyle=gc;ctx.font="700 13px 'Noto Sans KR',sans-serif";ctx.textAlign="left";ctx.textBaseline="top";ctx.fillText(g.name,gdd.minX+10,gdd.minY+4);ctx.restore();}}}
-
-      // Relations (NO shadow/glow on arrows)
+      // Relations
       relations.forEach(rel=>{const fc=characters.find(c=>c.id===rel.from),tc=characters.find(c=>c.id===rel.to);if(!fc||!tc)return;const color=getRelColor(rel),ls=rel.lineStyle||"solid";
         const drawPath=x=>{const dx=tc.x-fc.x,dy=tc.y-fc.y,dist=Math.sqrt(dx*dx+dy*dy);if(ls==="wavy"){const w=Math.max(6,Math.round(dist/22)),a=10;x.moveTo(fc.x,fc.y);for(let i=1;i<=w;i++){const t=i/w,p=(i-0.5)/w,mx=fc.x+dx*p,my=fc.y+dy*p,ex=fc.x+dx*t,ey=fc.y+dy*t,nx=-dy/dist,ny=dx/dist;x.quadraticCurveTo(mx+nx*a*(i%2===0?1:-1),my+ny*a*(i%2===0?1:-1),ex,ey);}}else if(ls==="zigzag"){const segs=Math.max(6,Math.round(dist/20)),a=10,nx=-dy/dist,ny=dx/dist;x.moveTo(fc.x,fc.y);for(let i=1;i<=segs;i++){const t=i/segs,s=i%2===0?1:-1,px=fc.x+dx*t,py=fc.y+dy*t;if(i<segs)x.lineTo(px+nx*a*s,py+ny*a*s);else x.lineTo(px,py);}}else{x.moveTo(fc.x,fc.y);x.quadraticCurveTo((fc.x+tc.x)/2-dy*0.15,(fc.y+tc.y)/2+dx*0.15,tc.x,tc.y);}};
-        // Glow line
         ctx.save();ctx.globalAlpha=isDark?0.11:0.11;ctx.strokeStyle=color;ctx.lineWidth=6;ctx.beginPath();drawPath(ctx);ctx.stroke();ctx.restore();
         ctx.save();ctx.globalAlpha=isDark?0.53:0.63;ctx.strokeStyle=color;ctx.lineWidth=2.5;if(ls==="dashed")ctx.setLineDash([8,4]);
         ctx.beginPath();drawPath(ctx);ctx.stroke();ctx.setLineDash([]);ctx.restore();
@@ -195,22 +182,6 @@ export default function CharacterMap() {
 
   const resetRelForm=()=>{setRelType("friend");setRelLabel("");setRelCustomColor(null);setRelLineStyle("solid");};
 
-  // Group functions
-  const openNewGroup=()=>{setGroupName("");setGroupColor("#6366F1");setGroupMembers([]);setShowGroupModal({editId:null});};
-  const openEditGroup=(g)=>{setGroupName(g.name||"");setGroupColor(g.color);setGroupMembers([...g.members]);setShowGroupModal({editId:g.id});};
-  const saveGroup=()=>{if(groupMembers.length<1)return;const d={name:groupName.trim(),color:groupColor,members:groupMembers};if(showGroupModal.editId){setGroups(p=>p.map(g=>g.id===showGroupModal.editId?{...g,...d}:g));}else{setGroups(p=>[...p,{id:generateId(),...d}]);}setShowGroupModal(null);};
-  const deleteGroup=(gid)=>{setConfirmModal({message:"이 그룹을 삭제할까요?",onConfirm:()=>{setGroups(p=>p.filter(g=>g.id!==gid));setConfirmModal(null);setShowGroupModal(null);}});};
-  const getGroupData=(g)=>{const pts=g.members.map(mid=>characters.find(c=>c.id===mid)).filter(Boolean);if(pts.length===0)return null;
-    const R=28;const circles=pts.map(c=>{const s=SIZE_LEVELS[c.sizeLevel??2];return{x:c.x,y:c.y,r:s.radius+R};});
-    // Add bridge circles between every pair of members (taper toward center)
-    const memberCount=circles.length;
-    for(let i=0;i<memberCount;i++)for(let j=i+1;j<memberCount;j++){
-      const a=circles[i],b=circles[j];const dx=b.x-a.x,dy=b.y-a.y,dist=Math.sqrt(dx*dx+dy*dy);
-      const br=Math.min(a.r,b.r)*0.55;const steps=Math.max(2,Math.ceil(dist/(br*0.8)));
-      for(let k=1;k<steps;k++){const t=k/steps;const mid=Math.abs(t-0.5)*2;const cr=br*(0.35+0.65*mid);circles.push({x:a.x+dx*t,y:a.y+dy*t,r:cr});}
-    }
-    let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;circles.forEach(c=>{minX=Math.min(minX,c.x-c.r);minY=Math.min(minY,c.y-c.r);maxX=Math.max(maxX,c.x+c.r);maxY=Math.max(maxY,c.y+c.r);});
-    return{circles,minX:minX-20,minY:minY-20,maxX:maxX+20,maxY:maxY+20};};
   
   const addCharacter=()=>{if(!newName.trim())return;setCharacters(p=>[...p,{id:generateId(),name:newName.trim(),x:300+Math.random()*400,y:200+Math.random()*300,color:newColor,avatar:newAvatar,description:newDesc.trim(),sizeLevel:newSize}]);setNewName("");setNewDesc("");setNewColor(COLORS[Math.floor(Math.random()*COLORS.length)]);setNewAvatar(null);setNewSize(2);setShowAddModal(false);};
   const deleteCharacter=id=>{setCharacters(p=>p.filter(c=>c.id!==id));setRelations(p=>p.filter(r=>r.from!==id&&r.to!==id));setSelectedChar(null);setShowEditModal(null);};
@@ -267,12 +238,6 @@ export default function CharacterMap() {
       </defs>
       <g transform={`translate(${pan.x},${pan.y}) scale(${zoom})`}>
         <rect width={canvasSize.width} height={canvasSize.height} fill="url(#grid)"/>
-        {groups.map(g=>{const gd=getGroupData(g);if(!gd)return null;const{circles}=gd;const gc=g.color;const fid=`gblob-${g.id}`;
-          return(<g key={g.id} onClick={e=>{e.stopPropagation();openEditGroup(g);}} style={{cursor:"pointer"}}>
-            <defs><filter id={fid} x="-20%" y="-20%" width="140%" height="140%" colorInterpolationFilters="sRGB"><feGaussianBlur in="SourceGraphic" stdDeviation="25" result="blur"/><feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 30 -10" result="sharp"/></filter></defs>
-            <g filter={`url(#${fid})`} opacity="0.18">{circles.map((c,i)=><circle key={i} cx={c.x} cy={c.y} r={c.r} fill={gc}/>)}</g>
-            {g.name&&<><rect x={gd.minX+2} y={gd.minY} width={g.name.length*14+16} height="22" rx="6" fill={gc} opacity="0.25"/><text x={gd.minX+10} y={gd.minY+16} fill={gc} fontSize="13" fontWeight="700" opacity="0.9">{g.name}</text></>}
-          </g>);})}
         {relations.map(rel=>{const fc=characters.find(c=>c.id===rel.from),tc=characters.find(c=>c.id===rel.to);if(!fc||!tc)return null;const color=getRelColor(rel),ls=rel.lineStyle||"solid",pathD=getRelPathD(rel,fc,tc),mid=getRelMid(rel,fc,tc),lb=(rel.type==="custom"&&!rel.label)?"":rel.label||(RELATIONSHIP_TYPES[rel.type]?.label||"기타"),pw=Math.max(50,lb.length*14+16);
           let arrow=null,arrow2=null;if(ls==="arrowToFirst"||ls==="arrowToSecond"||ls==="arrowBoth"){arrow=getArrowPoints(fc,tc,ls==="arrowToSecond"||ls==="arrowBoth");if(ls==="arrowBoth")arrow2=getArrowPoints(fc,tc,false);if(ls==="arrowToFirst")arrow=getArrowPoints(fc,tc,false);}
           const rlGlow=isDark?"0.11":"0.11",rlLine=isDark?"0.53":"0.63",rlArrow=isDark?"0.53":"0.63";
@@ -291,7 +256,6 @@ export default function CharacterMap() {
         <button onClick={()=>{exportJson();setShowFab(false);}} style={{...btnS,padding:"10px 18px",fontSize:"13px",display:"flex",alignItems:"center",gap:"8px",boxShadow:T.pShadow,borderRadius:"14px"}}>💾 내보내기</button>
         <button onClick={()=>{jsonInputRef.current?.click();}} style={{...btnS,padding:"10px 18px",fontSize:"13px",display:"flex",alignItems:"center",gap:"8px",boxShadow:T.pShadow,borderRadius:"14px"}}>📂 불러오기</button>
         <button onClick={()=>{if(selectedChar){setConnectingFrom(selectedChar);setShowFab(false);}}} style={{...btnS,padding:"10px 18px",fontSize:"13px",display:"flex",alignItems:"center",gap:"8px",boxShadow:T.pShadow,borderRadius:"14px",opacity:selectedChar?1:0.4}}>🔗 관계 연결</button>
-        <button onClick={()=>{openNewGroup();setShowFab(false);}} style={{...btnS,padding:"10px 18px",fontSize:"13px",display:"flex",alignItems:"center",gap:"8px",boxShadow:T.pShadow,borderRadius:"14px"}}>📦 그룹 추가</button>
         <button onClick={()=>{setShowAddModal(true);setShowFab(false);}} style={{...btnP,padding:"10px 18px",fontSize:"13px",display:"flex",alignItems:"center",gap:"8px",boxShadow:"0 8px 24px rgba(99,102,241,0.3)",borderRadius:"14px"}}>+ 인물 추가</button>
       </>}
       <button onClick={()=>setShowFab(p=>!p)} style={{width:"56px",height:"56px",borderRadius:"50%",background:"linear-gradient(135deg,#6366F1,#8B5CF6)",border:"none",color:"#fff",fontSize:"24px",cursor:"pointer",boxShadow:"0 8px 24px rgba(99,102,241,0.4)",display:"flex",alignItems:"center",justifyContent:"center",transition:"transform 0.2s",transform:showFab?"rotate(45deg)":"rotate(0deg)"}}>+</button>
@@ -370,10 +334,7 @@ export default function CharacterMap() {
           <div style={{fontWeight:"700",color:T.text,marginBottom:"6px",fontSize:"14px"}}>✏️ 편집 · 수정</div>
           <div>인물 또는 관계를 클릭해 해당 항목의 수정 또는 삭제가 가능합니다.<br/><span style={{color:"#EF4444",fontSize:"11px"}}>(삭제 되돌리기 불가)</span></div>
         </div>
-        <div style={{padding:"14px 16px",borderRadius:"14px",background:T.input}}>
-          <div style={{fontWeight:"700",color:T.text,marginBottom:"6px",fontSize:"14px"}}>👥 그룹</div>
-          <div>여러 인물에게 공통적인 소속이 있다면 <span style={{fontWeight:"600"}}>+ 버튼</span> → <span style={{fontWeight:"600"}}>그룹 추가</span>를 통해 그룹을 만들어주세요. 단, 가까이 있는 인물끼리만 잇는 게 미관상 좋습니다.</div>
-        </div>
+
         <div style={{padding:"14px 16px",borderRadius:"14px",background:T.input}}>
           <div style={{fontWeight:"700",color:T.text,marginBottom:"6px",fontSize:"14px"}}>🎨 테마 설정</div>
           <div><span style={{fontWeight:"600"}}>+ 버튼</span> → <span style={{fontWeight:"600"}}>배경 색상</span>을 통해 배경색 변경이 가능합니다.<br/>체커보드 클릭 시 배경이 투명화된 PNG로 저장 가능합니다.</div>
@@ -396,35 +357,7 @@ export default function CharacterMap() {
         <button onClick={()=>setShowInfo(false)} style={btnP}>확인</button>
       </div>
     </div></div>}
-
-    {/* Group Modal */}
-    {showGroupModal&&<div style={modalStyle} onClick={()=>setShowGroupModal(null)}><div style={{...cardStyle,width:"420px",maxHeight:"85vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-      <h3 style={{margin:"0 0 20px",color:T.text,fontSize:"18px",fontWeight:"600"}}>{showGroupModal.editId?"📦 그룹 편집":"📦 새 그룹"}</h3>
-      <div style={{display:"flex",flexDirection:"column",gap:"16px"}}>
-        <div><label style={{fontSize:"12px",color:T.textSec,marginBottom:"6px",display:"block"}}>그룹 이름 (선택)</label><input value={groupName} onChange={e=>setGroupName(e.target.value)} placeholder="예: 1반, 길드, 왕족..." style={inputStyle}/></div>
-        <div><label style={{fontSize:"12px",color:T.textSec,marginBottom:"8px",display:"block"}}>색상</label><div style={{display:"flex",gap:"8px",flexWrap:"wrap"}}>{COLORS.map(c=><div key={c} onClick={()=>setGroupColor(c)} style={{width:"28px",height:"28px",borderRadius:"50%",background:c,cursor:"pointer",border:groupColor===c?"3px solid #6366F1":"3px solid transparent"}}/>)}</div></div>
-        <div><label style={{fontSize:"12px",color:T.textSec,marginBottom:"8px",display:"block"}}>멤버 선택</label><div style={{display:"flex",flexDirection:"column",gap:"6px",maxHeight:"200px",overflowY:"auto"}}>{characters.map(ch=>{const isMember=groupMembers.includes(ch.id);return(<div key={ch.id} onClick={()=>setGroupMembers(p=>isMember?p.filter(m=>m!==ch.id):[...p,ch.id])} style={{display:"flex",alignItems:"center",gap:"10px",padding:"8px 12px",borderRadius:"10px",cursor:"pointer",border:`1px solid ${isMember?"#6366F1":T.btnSecBd}`,background:isMember?"rgba(99,102,241,0.1)":T.btnSec}}>
-          <div style={{width:"24px",height:"24px",borderRadius:"50%",background:`linear-gradient(135deg,${ch.color},${ch.color}88)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px",fontWeight:"700",color:"#fff",overflow:"hidden",flexShrink:0}}>{ch.avatar?<img src={ch.avatar} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:ch.name.charAt(0)}</div>
-          <span style={{fontSize:"13px",color:T.text,flex:1}}>{ch.name}</span>
-          <span style={{fontSize:"18px"}}>{isMember?"✓":""}</span>
-        </div>);})}</div></div>
-        <div style={{display:"flex",gap:"8px",justifyContent:"flex-end",marginTop:"8px"}}>
-          {showGroupModal.editId&&<button onClick={()=>deleteGroup(showGroupModal.editId)} style={{...btnS,color:"#FF6B6B",borderColor:"rgba(255,80,80,0.3)",marginRight:"auto"}}>삭제</button>}
-          <button onClick={()=>setShowGroupModal(null)} style={btnS}>취소</button>
-          <button onClick={saveGroup} style={{...btnP,opacity:groupMembers.length>0?1:0.5}}>저장</button>
-        </div>
-      </div>
-    </div></div>}
-
     {/* Confirm Modal */}
-    {confirmModal&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:T.overlay,backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1100}} onClick={()=>setConfirmModal(null)}><div style={{background:`linear-gradient(145deg,${T.card[0]},${T.card[1]})`,borderRadius:"20px",padding:"28px 32px",border:`1px solid ${T.cardBd}`,boxShadow:T.shadow,maxWidth:"360px",width:"90vw"}} onClick={e=>e.stopPropagation()}>
-      <div style={{fontSize:"15px",color:T.text,fontWeight:"500",marginBottom:"24px",lineHeight:"1.5"}}>{confirmModal.message}</div>
-      <div style={{display:"flex",gap:"8px",justifyContent:"flex-end"}}>
-        <button onClick={()=>setConfirmModal(null)} style={{...btnS,padding:"10px 20px"}}>취소</button>
-        <button onClick={confirmModal.onConfirm} style={{padding:"10px 20px",background:"linear-gradient(135deg,#EF4444,#DC2626)",border:"none",borderRadius:"12px",color:"#fff",fontSize:"14px",fontWeight:"600",cursor:"pointer",fontFamily:"'Noto Sans KR',sans-serif"}}>삭제</button>
-      </div>
-    </div></div>}
-
-    {isExporting&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:T.overlay,display:"flex",alignItems:"center",justifyContent:"center",zIndex:2000}}><div style={{padding:"20px 40px",borderRadius:"16px",background:`linear-gradient(145deg,${T.card[0]},${T.card[1]})`,color:T.text,fontSize:"15px",border:`1px solid ${T.cardBd}`}}>⏳ PNG로 저장 중...</div></div>}
+    {confirmModal&&<div style={modalStyle} onClick={()=>setConfirmModal(null)}><div style={{...cardStyle,width:"340px",textAlign:"center"}} onClick={e=>e.stopPropagation()}><p style={{color:T.text,fontSize:"15px",marginBottom:"24px",lineHeight:"1.6"}}>{confirmModal.message}</p><div style={{display:"flex",gap:"10px",justifyContent:"center"}}><button onClick={()=>setConfirmModal(null)} style={btnS}>취소</button><button onClick={confirmModal.onConfirm} style={{...btnP,background:"linear-gradient(135deg,#EF4444,#DC2626)"}}>삭제</button></div></div></div>}
   </div>);
 }
